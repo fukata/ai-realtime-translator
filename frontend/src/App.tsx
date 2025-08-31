@@ -48,6 +48,13 @@ export function App() {
   type AudioPlayback = 'on' | 'off';
   const [audioPlayback, setAudioPlayback] = useState<AudioPlayback>('on');
   const [rnnoiseState, setRnnoiseState] = useState<'idle' | 'loading' | 'ready' | 'bypass'>('idle');
+  const [showWaveform, setShowWaveform] = useState(true);
+  const inputCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const outputCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserInRef = useRef<AnalyserNode | null>(null);
+  const analyserOutRef = useRef<AnalyserNode | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -272,6 +279,16 @@ export function App() {
           // Keep references for cleanup
           (window as any).__rnnoise_audio_context = audioContext;
           (window as any).__rnnoise_nodes = { src, denoiseNode, dst };
+          // Waveform analysers (before/after)
+          const anIn = audioContext.createAnalyser();
+          anIn.fftSize = 2048; anIn.smoothingTimeConstant = 0.85;
+          const anOut = audioContext.createAnalyser();
+          anOut.fftSize = 2048; anOut.smoothingTimeConstant = 0.85;
+          src.connect(anIn);
+          (denoiseNode as any).connect(anOut);
+          audioCtxRef.current = audioContext;
+          analyserInRef.current = anIn;
+          analyserOutRef.current = anOut;
         } catch (e) {
           // Fallback to direct tracks on failure
           local.getTracks().forEach((t) => pc.addTrack(t, local));
@@ -282,6 +299,20 @@ export function App() {
         // direct: add original track(s)
         local.getTracks().forEach((t) => pc.addTrack(t, local));
         setRnnoiseState('idle');
+        // Waveform analysers (mirror input as output)
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const src = audioContext.createMediaStreamSource(local);
+          const anIn = audioContext.createAnalyser();
+          anIn.fftSize = 2048; anIn.smoothingTimeConstant = 0.85;
+          const anOut = audioContext.createAnalyser();
+          anOut.fftSize = 2048; anOut.smoothingTimeConstant = 0.85;
+          src.connect(anIn);
+          src.connect(anOut);
+          audioCtxRef.current = audioContext;
+          analyserInRef.current = anIn;
+          analyserOutRef.current = anOut;
+        } catch {}
       }
 
       const offer = await pc.createOffer({ offerToReceiveAudio: true });
@@ -310,6 +341,9 @@ export function App() {
         }
       };
 
+      // Start waveform draw if enabled
+      if (showWaveform) startWaveformDraw();
+
       setStatus('connected');
     } catch (e: any) {
       setStatus('error');
@@ -336,6 +370,14 @@ export function App() {
       (window as any).__rnnoise_audio_context = undefined;
       (window as any).__rnnoise_nodes = undefined;
     } catch {}
+    try {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      analyserInRef.current = null;
+      analyserOutRef.current = null;
+      await audioCtxRef.current?.close();
+    } catch {}
+    audioCtxRef.current = null;
     try {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
     } catch {}
@@ -391,6 +433,43 @@ export function App() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noiseProfile]);
+
+  function startWaveformDraw() {
+    const draw = () => {
+      const anIn = analyserInRef.current;
+      const anOut = analyserOutRef.current;
+      const inCv = inputCanvasRef.current;
+      const outCv = outputCanvasRef.current;
+      if (anIn && inCv) renderWave(anIn, inCv);
+      if (anOut && outCv) renderWave(anOut, outCv);
+      rafRef.current = requestAnimationFrame(draw);
+    };
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(draw);
+  }
+
+  function renderWave(analyser: AnalyserNode, canvas: HTMLCanvasElement) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
+    const data = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(data);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#0ea5e9';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    const step = data.length / w;
+    for (let x = 0; x < w; x++) {
+      const v = data[Math.floor(x * step)] / 128 - 1; // -1..1
+      const y = h / 2 + v * (h * 0.4);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
 
   const busy = status === 'connecting';
 
@@ -564,6 +643,18 @@ export function App() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        {showWaveform && (
+          <>
+            <div>
+              <h3 className="my-2 font-medium">Input Waveform</h3>
+              <canvas ref={inputCanvasRef} width={560} height={100} className="w-full bg-slate-100 rounded border border-slate-200" />
+            </div>
+            <div>
+              <h3 className="my-2 font-medium">Output Waveform</h3>
+              <canvas ref={outputCanvasRef} width={560} height={100} className="w-full bg-slate-100 rounded border border-slate-200" />
+            </div>
+          </>
+        )}
         <div>
           <h3 className="my-2 font-medium">Input Transcript ({sourceLang})</h3>
           <div className="whitespace-pre-wrap bg-slate-100 rounded p-3 min-h-20">
