@@ -324,16 +324,17 @@ export function App() {
   }
 
   return (
-    <div style={{ padding: 24, fontFamily: 'system-ui, sans-serif', maxWidth: 720 }}>
-      <h1>AI Realtime Translator</h1>
-      <p style={{ color: '#555' }}>
-        Cloudflare Access で保護された <code>/api/token</code> から短命トークンを取得し、WebRTC で OpenAI Realtime に接続します。
-      </p>
+    <div className="mx-auto max-w-5xl p-3 font-sans">
+      <h1 className="text-2xl font-semibold">AI Realtime Translator</h1>
 
-      <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span>Model</span>
-          <select value={model} onChange={(e) => setModel(e.target.value)}>
+      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-slate-700">Model</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+          >
             {MODEL_OPTIONS.map((m) => (
               <option key={m} value={m}>
                 {m}
@@ -341,9 +342,13 @@ export function App() {
             ))}
           </select>
         </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span>Voice</span>
-          <select value={voice} onChange={(e) => setVoice(e.target.value)}>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-slate-700">Voice</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={voice}
+            onChange={(e) => setVoice(e.target.value)}
+          >
             {VOICE_OPTIONS.map((v) => (
               <option key={v} value={v}>
                 {v}
@@ -351,9 +356,13 @@ export function App() {
             ))}
           </select>
         </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span>Source</span>
-          <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-slate-700">Source</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={sourceLang}
+            onChange={(e) => setSourceLang(e.target.value)}
+          >
             {LANGUAGE_OPTIONS.map((l) => (
               <option key={l.code} value={l.code}>
                 {l.label}
@@ -361,9 +370,13 @@ export function App() {
             ))}
           </select>
         </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span>Target</span>
-          <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-slate-700">Target</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={targetLang}
+            onChange={(e) => setTargetLang(e.target.value)}
+          >
             {LANGUAGE_OPTIONS.map((l) => (
               <option key={l.code} value={l.code}>
                 {l.label}
@@ -373,10 +386,14 @@ export function App() {
         </label>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
-        <label>
-          Mic:
-          <select value={micId} onChange={(e) => setMicId(e.target.value)} style={{ marginLeft: 8 }}>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <label className="text-sm flex items-center gap-2">
+          <span className="text-slate-700">Mic:</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={micId}
+            onChange={(e) => setMicId(e.target.value)}
+          >
             <option value="">Default</option>
             {mics.map((d) => (
               <option key={d.deviceId} value={d.deviceId}>
@@ -385,47 +402,60 @@ export function App() {
             ))}
           </select>
         </label>
-        <button onClick={connectWebRTC} disabled={busy || status === 'connected'}>
+        <button
+          className="px-3 py-1.5 rounded bg-indigo-600 text-white disabled:opacity-50"
+          onClick={connectWebRTC}
+          disabled={busy || status === 'connected'}
+        >
           {busy ? 'Connecting…' : 'Connect'}
         </button>
-        <button onClick={disconnect} disabled={status !== 'connected' && status !== 'error'}>
+        <button
+          className="px-3 py-1.5 rounded bg-slate-200 hover:bg-slate-300 disabled:opacity-50"
+          onClick={disconnect}
+          disabled={status !== 'connected' && status !== 'error'}
+        >
           Disconnect
         </button>
-        <small>Server URL: {serverUrl || 'http://localhost:8787'}</small>
-        <small>Status: {status}</small>
+        <small className="text-slate-600">Server URL: {serverUrl || 'http://localhost:8787'}</small>
+        <small className="text-slate-600">Status: {status}</small>
       </div>
 
       {error && (
-        <div style={{ marginTop: 12, color: '#b00020' }}>Error: {error}</div>
+        <div className="mt-3 text-red-700">Error: {error}</div>
       )}
 
-      <div style={{ marginTop: 16 }}>
+      <div className="mt-4">
         <audio ref={remoteAudioRef} autoPlay playsInline />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <h3 style={{ margin: '8px 0' }}>Input Transcript ({sourceLang})</h3>
-          <div style={{ whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: 12, minHeight: 80 }}>
+          <h3 className="my-2 font-medium">Input Transcript ({sourceLang})</h3>
+          <div className="whitespace-pre-wrap bg-slate-100 rounded p-3 min-h-20">
             {inputTranscript || '—'}
           </div>
         </div>
         <div>
-          <h3 style={{ margin: '8px 0' }}>Output Transcript ({targetLang})</h3>
-          <div style={{ whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: 12, minHeight: 80 }}>
+          <h3 className="my-2 font-medium">Output Transcript ({targetLang})</h3>
+          <div className="whitespace-pre-wrap bg-slate-100 rounded p-3 min-h-20">
             {outputTranscript || '—'}
           </div>
         </div>
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0' }}>
-          <h3 style={{ margin: 0 }}>Logs</h3>
-          <button onClick={copyLogs} disabled={logs.length === 0} title="Copy logs to clipboard">
+      <div className="mt-4">
+        <div className="flex items-center gap-3 my-2">
+          <h3 className="m-0 font-medium">Logs</h3>
+          <button
+            className="px-3 py-1.5 rounded bg-slate-200 hover:bg-slate-300 disabled:opacity-50"
+            onClick={copyLogs}
+            disabled={logs.length === 0}
+            title="Copy logs to clipboard"
+          >
             {copied ? 'Copied!' : 'Copy Logs'}
           </button>
         </div>
-        <pre style={{ background: '#f6f8fa', padding: 12, maxHeight: 160, overflow: 'auto' }}>
+        <pre className="bg-slate-100 rounded p-3 max-h-40 overflow-auto">
           {logs.join('\n')}
         </pre>
       </div>
