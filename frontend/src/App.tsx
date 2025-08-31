@@ -171,11 +171,16 @@ export function App() {
             }
 
             // Input side transcription (best effort)
-            if (msg?.type === 'input_audio_buffer.speech_started') {
+            if (msg?.type === 'input_audio_buffer.speech_started' || msg?.type === 'response.input_audio_transcription.started') {
               setInputTranscript('');
               inputBufferRef.current = '';
             }
-            if (msg?.type === 'input_audio_transcription.delta' || msg?.type === 'input_audio_transcript.delta') {
+            if (
+              msg?.type === 'input_audio_transcription.delta' ||
+              msg?.type === 'input_audio_transcript.delta' ||
+              msg?.type === 'response.input_audio_transcription.delta' ||
+              msg?.type === 'response.input_audio_transcript.delta'
+            ) {
               const seg = (msg.delta ?? msg.text ?? msg.transcript) as string | undefined;
               if (typeof seg === 'string') {
                 inputBufferRef.current += seg;
@@ -185,7 +190,10 @@ export function App() {
             if (
               msg?.type === 'input_audio_transcription.done' ||
               msg?.type === 'input_audio_transcription.completed' ||
-              msg?.type === 'input_audio_transcript.done'
+              msg?.type === 'input_audio_transcript.done' ||
+              msg?.type === 'response.input_audio_transcription.done' ||
+              msg?.type === 'response.input_audio_transcription.completed' ||
+              msg?.type === 'response.input_audio_transcript.done'
             ) {
               setLogs((ls) => [...ls, 'input_transcript_done']);
               const text = (inputBufferRef.current || '').trim();
