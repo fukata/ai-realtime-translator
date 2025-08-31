@@ -5,7 +5,8 @@ Minimal monorepo scaffold for a realtime translation app.
 ## Structure
 
 - `frontend/`: Vite + React TypeScript client
-- `server/`: Express-based token issuer and optional proxy
+- `server/`: Express-based token issuer (local dev / optional)
+- `worker/`: Cloudflare Workers for token issuance (production)
 - `tests/`: Placeholder for integration tests
 - `scripts/`: Local tooling
 
@@ -16,8 +17,9 @@ Minimal monorepo scaffold for a realtime translation app.
 2. Configure env:
    - Copy `.env.example` to `.env` and fill values
 3. Dev servers:
-   - Frontend: `pnpm --filter frontend dev`
-   - Server: `pnpm --filter server dev`
+   - Frontend (Vite): `pnpm --filter frontend dev`
+   - Server (Express, 任意): `pnpm --filter server dev`
+   - Worker (Wrangler): `pnpm --filter worker dev`
 
 ## Build & Test
 
@@ -27,6 +29,12 @@ Minimal monorepo scaffold for a realtime translation app.
 
 ## Notes
 
-- Never expose `OPENAI_API_KEY` to the browser. Use the `server` to issue short-lived tokens.
+- Never expose `OPENAI_API_KEY` to the browser. Issue short‑lived tokens via `worker` (Cloudflare Workers) or `server` in dev.
 - Enforce CORS and consider rate limiting the token endpoint.
 
+## Cloudflare Workers
+
+- Dev: `pnpm --filter worker dev` (defaults to `http://localhost:8787`).
+- Config: `worker/wrangler.toml` (`ALLOWED_ORIGINS`, `ALLOWED_EMAILS`, `DEV_BYPASS_ACCESS`).
+- Secrets: `wrangler secret put OPENAI_API_KEY`（本番では必ず Secret で設定）。
+- Access: Cloudflare Access を有効化し、許可メールを限定してください。

@@ -1,0 +1,24 @@
+{
+  "name": "worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --local --port=8787",
+    "deploy": "wrangler deploy src/index.ts",
+    "build": "wrangler deploy --dry-run src/index.ts",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "format": "prettier -w 'src/**/*.{ts,tsx,js,json,md}'",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240821.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "wrangler": "^3.72.0"
+  }
+}
