@@ -47,7 +47,7 @@ export function App() {
   const [noiseProfile, setNoiseProfile] = useState<NoiseProfile>('default');
   type AudioPlayback = 'on' | 'off';
   const [audioPlayback, setAudioPlayback] = useState<AudioPlayback>('on');
-  const [rnnoiseState, setRnnoiseState] = useState<'idle' | 'loading' | 'ready' | 'bypass'>('idle');
+  const [rnnoiseState, setRnnoiseState] = useState<'idle' | 'loading' | 'ready' | 'resampling' | 'bypass'>('idle');
   const [showWaveform, setShowWaveform] = useState(true);
   const inputCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const outputCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -254,7 +254,7 @@ export function App() {
       if (noiseProfile === 'rnnoise') {
         try {
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 48000 });
-          const workletUrl = new URL('./worklets/rnnoise-processor.ts', import.meta.url);
+          const workletUrl = new URL('./worklets/rnnoise-processor.js', import.meta.url);
           await audioContext.audioWorklet.addModule(workletUrl);
 
           const src = audioContext.createMediaStreamSource(local);
@@ -264,7 +264,7 @@ export function App() {
             denoiseNode.port.onmessage = (ev: MessageEvent) => {
               const d: any = ev.data;
               if (d?.type === 'rnnoise.status') {
-                if (d.status === 'ready') setRnnoiseState('ready');
+                if (d.status === 'ready' || d.status === 'resampling') setRnnoiseState(d.status);
                 else setRnnoiseState('bypass');
               }
             };
@@ -621,7 +621,7 @@ export function App() {
             <span
               className={
                 'inline-block w-2 h-2 rounded-full ' +
-                (rnnoiseState === 'ready'
+                (rnnoiseState === 'ready' || rnnoiseState === 'resampling'
                   ? 'bg-green-500'
                   : rnnoiseState === 'loading'
                   ? 'bg-slate-400'
