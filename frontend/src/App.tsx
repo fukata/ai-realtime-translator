@@ -40,6 +40,7 @@ export function App() {
   const [inputTranscript, setInputTranscript] = useState('');
   const [outputTranscript, setOutputTranscript] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [micId, setMicId] = useState<string>('');
 
@@ -300,6 +301,28 @@ export function App() {
 
   const busy = status === 'connecting';
 
+  async function copyLogs() {
+    const text = logs.join('\n');
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch (e) {
+      setError(`Failed to copy logs: ${String((e as any)?.message || e)}`);
+    }
+  }
+
   return (
     <div style={{ padding: 24, fontFamily: 'system-ui, sans-serif', maxWidth: 720 }}>
       <h1>AI Realtime Translator</h1>
@@ -396,7 +419,12 @@ export function App() {
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <h3 style={{ margin: '8px 0' }}>Logs</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0' }}>
+          <h3 style={{ margin: 0 }}>Logs</h3>
+          <button onClick={copyLogs} disabled={logs.length === 0} title="Copy logs to clipboard">
+            {copied ? 'Copied!' : 'Copy Logs'}
+          </button>
+        </div>
         <pre style={{ background: '#f6f8fa', padding: 12, maxHeight: 160, overflow: 'auto' }}>
           {logs.join('\n')}
         </pre>
