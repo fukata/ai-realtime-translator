@@ -279,6 +279,10 @@ export function App() {
           // Keep references for cleanup
           (window as any).__rnnoise_audio_context = audioContext;
           (window as any).__rnnoise_nodes = { src, denoiseNode, dst };
+          try {
+            await audioContext.resume();
+            setLogs((ls) => [...ls, `rnnoise_audio_context_state:${audioContext.state}`]);
+          } catch {}
           // Waveform analysers (before/after)
           const anIn = audioContext.createAnalyser();
           anIn.fftSize = 2048; anIn.smoothingTimeConstant = 0.85;
@@ -312,6 +316,7 @@ export function App() {
           audioCtxRef.current = audioContext;
           analyserInRef.current = anIn;
           analyserOutRef.current = anOut;
+          try { await audioContext.resume(); setLogs((ls) => [...ls, `viz_audio_context_state:${audioContext.state}`]); } catch {}
         } catch {}
       }
 
