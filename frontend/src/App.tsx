@@ -45,6 +45,7 @@ export function App() {
   const [micId, setMicId] = useState<string>('');
   type NoiseProfile = 'default' | 'off' | 'rnnoise';
   const [noiseProfile, setNoiseProfile] = useState<NoiseProfile>('default');
+  const [rnnoiseState, setRnnoiseState] = useState<'idle' | 'loading' | 'ready' | 'bypass'>('idle');
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -243,6 +244,16 @@ export function App() {
 
           const src = audioContext.createMediaStreamSource(local);
           const denoiseNode = new (window as any).AudioWorkletNode(audioContext, 'rnnoise-processor');
+          try {
+            setRnnoiseState('loading');
+            denoiseNode.port.onmessage = (ev: MessageEvent) => {
+              const d: any = ev.data;
+              if (d?.type === 'rnnoise.status') {
+                if (d.status === 'ready') setRnnoiseState('ready');
+                else setRnnoiseState('bypass');
+              }
+            };
+          } catch {}
           const dst = audioContext.createMediaStreamDestination();
           src.connect(denoiseNode as any);
           (denoiseNode as any).connect(dst);
@@ -257,10 +268,12 @@ export function App() {
           // Fallback to direct tracks on failure
           local.getTracks().forEach((t) => pc.addTrack(t, local));
           setLogs((ls) => [...ls, `rnnoise_worklet_failed: ${String((e as any)?.message || e)}`]);
+          setRnnoiseState('bypass');
         }
       } else {
         // direct: add original track(s)
         local.getTracks().forEach((t) => pc.addTrack(t, local));
+        setRnnoiseState('idle');
       }
 
       const offer = await pc.createOffer({ offerToReceiveAudio: true });
@@ -322,6 +335,7 @@ export function App() {
     dcRef.current = null;
     localStreamRef.current = null;
     setStatus('idle');
+    setRnnoiseState('idle');
   }
 
   useEffect(() => {
@@ -335,6 +349,21 @@ export function App() {
       disconnect();
     };
   }, []);
+
+  // Auto-reconnect when RNNoise option changes during an active session
+  useEffect(() => {
+    if (status !== 'connected') return;
+    setLogs((ls) => [...ls, `auto_reconnect: noiseProfile=${noiseProfile}`]);
+    (async () => {
+      try {
+        await disconnect();
+        await connectWebRTC();
+      } catch (e) {
+        setError(`auto reconnect failed: ${String((e as any)?.message || e)}`);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noiseProfile]);
 
   const busy = status === 'connecting';
 
@@ -468,6 +497,23 @@ export function App() {
         </button>
         <small className="text-slate-600">Server URL: {serverUrl || 'http://localhost:8787'}</small>
         <small className="text-slate-600">Status: {status}</small>
+        {noiseProfile === 'rnnoise' && (
+          <small className="text-slate-600 flex items-center gap-1">
+            RNNoise:
+            <span
+              className={
+                'inline-block w-2 h-2 rounded-full ' +
+                (rnnoiseState === 'ready'
+                  ? 'bg-green-500'
+                  : rnnoiseState === 'loading'
+                  ? 'bg-slate-400'
+                  : 'bg-amber-500')
+              }
+              title={`rnnoise: ${rnnoiseState}`}
+            />
+            <span>{rnnoiseState}</span>
+          </small>
+        )}
       </div>
 
       {error && (

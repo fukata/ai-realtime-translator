@@ -14,6 +14,10 @@ class RnnoiseProcessor extends AudioWorkletProcessor {
         // Guard sample rate
         if (sampleRate !== 48000) {
             this.bypass = true;
+            try {
+                this.port.postMessage({ type: 'rnnoise.status', status: 'bypass', reason: 'sample_rate' });
+            }
+            catch { }
         }
         // Load RNNoise asynchronously
         Rnnoise.load()
@@ -22,9 +26,17 @@ class RnnoiseProcessor extends AudioWorkletProcessor {
                 return;
             this.denoiser = rn.createDenoiseState();
             this.ready = true;
+            try {
+                this.port.postMessage({ type: 'rnnoise.status', status: 'ready' });
+            }
+            catch { }
         })
             .catch(() => {
             this.bypass = true;
+            try {
+                this.port.postMessage({ type: 'rnnoise.status', status: 'bypass', reason: 'init_error' });
+            }
+            catch { }
         });
         // handle messages (optional) for future controls
         this.port.onmessage = (ev) => {
