@@ -2,7 +2,32 @@
 
 ## コミュニケーション方針（日本語）
 - このリポジトリにおける全てのやり取り（Issue、Pull Request、コミットメッセージ、コードコメント、ドキュメント、レビュー、ディスカッション）は日本語で行います。
+- コミットメッセージ・PR タイトル/本文も日本語で統一してください。
 - 例外が必要な場合は理由を明記し、最小限に留めてください。
+
+## アーキテクチャ方針（概要）
+- フロントエンド: Cloudflare Pages（`frontend/` をビルドして配信）。
+- API（本番）: Cloudflare Workers（`worker/`）。`POST /api/token` で OpenAI Realtime の短命トークンを発行。
+- API（開発/任意）: `server/`（Express）はローカル開発補助用。将来的に本番では使用しない想定。
+- 認可: Cloudflare Access（Zero Trust）で Pages/Workers を保護し、許可メールのみアクセス可能にする。
+- CORS: フロントのオリジンのみ許可（Access と二重で絞る）。
+
+## Cloudflare Access/Workers 運用ルール
+- Access: 対象ルート（Pages/Workers）に許可メールを限定したポリシーを設定。
+- Workers 側で `Cf-Access-Authenticated-User-Email` を検証し、`ALLOWED_EMAILS` に含まれない場合は 403。
+- 開発時は `DEV_BYPASS_ACCESS=true` で Access 検証をバイパス可能（本番は常に無効）。
+- Secrets: `OPENAI_API_KEY` は必ず Workers Secret に保存。ブラウザへは決して露出しない。
+
+## 環境変数
+- Workers（Secret）: `OPENAI_API_KEY`
+- Workers（Vars）: `ALLOWED_ORIGINS`（カンマ区切り）, `ALLOWED_EMAILS`（カンマ区切り）, `DEV_BYPASS_ACCESS`（true/false）
+- Frontend: `VITE_SERVER_URL`（開発時の API 先。既定は `http://localhost:8787`）
+
+## デプロイ方針（概要）
+1. Workers: `wrangler secret put OPENAI_API_KEY` を設定しデプロイ。
+2. Pages: `frontend/` をビルドしデプロイ。環境変数に `VITE_SERVER_URL` を設定（Workers の URL）。
+3. Access: Pages/Workers 両方に許可メール限定のポリシーを適用。
+4. Rate Limiting: Cloudflare のレート制限/WAF を `/api/token` に適用。
 
 ## Project Structure & Module Organization
 - `frontend/`: Web client (Vite/Next.js). `src/`, `public/`, `components/`, `lib/`.
