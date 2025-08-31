@@ -13,6 +13,8 @@ export function App() {
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // Cloudflare Access 用のクッキー送信（別オリジンでも送る）
+        credentials: 'include',
         body: JSON.stringify({}),
       });
       const json = await res.json();
