@@ -1,108 +1,32 @@
-# ai-realtime-translator
+# AI Realtime Translator (WIP)
 
-Webブラウザ上で動作するリアルタイム翻訳アプリです。OpenAIの GPT Realtime API を利用し、マイク入力の音声をリアルタイムに文字起こしして翻訳し、結果を画面表示と音声再生の両方でフィードバックします。話者の言語（入力）と翻訳後の言語（出力）を選択でき、スイッチが ON の間は継続して処理を行います。
+Minimal monorepo scaffold for a realtime translation app.
 
-## 目的
-- 会議・オンライン通話・対面会話などで、相手の発話を即時に翻訳して理解する。
-- 自分の端末だけでブラウザから手軽に利用できる UI を提供する。
-- テキストと音声の両方で結果を提示し、聴覚・視覚の両面から支援する。
+## Structure
 
-## 主要機能
-- 入力言語と出力（翻訳）言語の選択
-- リアルタイム音声入力（マイク）
-- リアルタイム文字起こし（STT）＋ 翻訳
-- 翻訳結果のテキスト表示
-- 翻訳結果の音声合成（TTS）と再生
-- ON/OFF スイッチ（ON 中は連続処理、OFF で停止）
-- マイク権限の確認・再接続、エラーハンドリング
+- `frontend/`: Vite + React TypeScript client
+- `server/`: Express-based token issuer and optional proxy
+- `tests/`: Placeholder for integration tests
+- `scripts/`: Local tooling
 
-## 想定アーキテクチャ（概要）
-- フロントエンド（Web）
-  - ブラウザでマイク入力を取得し、GPT Realtime API とセッションを張って音声を送信
-  - 応答として受信するイベントから、文字起こし・翻訳結果のテキストおよび音声を取得
-  - UI：入力/出力言語の選択、ON/OFF トグル、テキスト結果、音声再生
-- バックエンド（最小構成）
-  - Realtime API 用のエフェメラル（短期）トークンを発行するエンドポイント
-  - 必要に応じて WebSocket 経由のプロキシやログ記録を実装
-- 接続方式
-  - WebRTC を優先（低レイテンシ・双方向）
-  - フォールバックとして WebSocket を検討
+## Getting Started
 
-※ 実装では OpenAI の Realtime API 仕様（モデル名・イベント形式・音声コーデックなど）に合わせます。詳細は公式ドキュメントを参照してください。
+1. Install deps (Node 20+):
+   - `pnpm install` (or `npm ci`)
+2. Configure env:
+   - Copy `.env.example` to `.env` and fill values
+3. Dev servers:
+   - Frontend: `pnpm --filter frontend dev`
+   - Server: `pnpm --filter server dev`
 
-## 要件まとめ（本リポジトリにおけるゴール）
-- GPT Realtime API を利用したリアルタイム翻訳 Web アプリ
-- 「話者の言語（入力）」と「翻訳後の言語（出力）」を UI から選択可能
-- スイッチが ON の間、マイク入力を継続的に処理
-  - 音声 → 文字起こし → 翻訳
-  - 画面に翻訳テキストをリアルタイム表示
-  - 翻訳結果の音声を自動再生（TTS）
+## Build & Test
 
-## 動作環境
-- Node.js 20 以上（開発用）
-- 主要モダンブラウザ（WebRTC 対応、マイク利用可）
-- OpenAI API キー（サーバ側で保持）
+- Build all: `pnpm -r build`
+- Test all: `pnpm -r test`
+- Lint/format: `pnpm -r lint` and `pnpm -r format`
 
-## 環境変数（例）
-以下は想定例です。実際のモデル名やオプションは OpenAI の最新ドキュメントに従って設定してください。
+## Notes
 
-```env
-# サーバ側で保持する OpenAI API キー
-OPENAI_API_KEY=sk-...
+- Never expose `OPENAI_API_KEY` to the browser. Use the `server` to issue short-lived tokens.
+- Enforce CORS and consider rate limiting the token endpoint.
 
-# 使用する Realtime モデル
-OPENAI_REALTIME_MODEL=gpt-4o-realtime-preview
-
-# 既定の入出力言語（BCP 47 などの言語タグを推奨）
-DEFAULT_INPUT_LANGUAGE=ja-JP
-DEFAULT_OUTPUT_LANGUAGE=en-US
-
-# 音声合成の音色・ボイス（例: alloy など）
-TTS_VOICE=alloy
-```
-
-## 使い方（想定 UI フロー）
-1. ページを開くと、入力言語と出力言語のプルダウン（例：日本語 → 英語）が表示されます。
-2. ON/OFF トグルを ON にすると、ブラウザがマイク権限を要求します。
-3. 許可すると、音声が Realtime API に送信され、文字起こしと翻訳がリアルタイムに行われます。
-4. 翻訳結果のテキストが画面に流れ、同時に音声が自動再生されます。
-5. OFF にすると処理が停止し、マイク・セッションをクリーンアップします。
-
-## セットアップ（開発）
-実装はこれから行います。以下は想定の流れです。
-
-- リポジトリをクローン
-- パッケージマネージャのセットアップ（npm/pnpm/yarn のいずれか）
-- サーバに `.env` を作成し `OPENAI_API_KEY` を設定
-- フロントエンドはローカル開発サーバで起動（例：Vite / Next.js など）
-- バックエンドはトークン発行用の軽量 API を提供
-
-実装後に具体的なコマンド（例：`pnpm dev`）やディレクトリ構成を本 README に追記します。
-
-## セキュリティとプライバシー
-- `OPENAI_API_KEY` はサーバ側にのみ保存し、フロントエンドへ直接配布しません。
-- フロントエンドは、サーバからエフェメラルトークンを取得して Realtime API と接続します。
-- 音声データやテキストは最小限のみ送信し、不要なログ保存は避けます。
-
-## 既知の課題 / 検討事項
-- ブラウザ・デバイスごとのマイク/音声出力デバイスの差異吸収
-- ノイズ抑制、エコーキャンセル等の音声処理
-- 長時間接続時のセッション再接続処理
-- WebRTC が使えない環境へのフォールバック（WebSocket）
-- 多言語フォント表示・右左書字（RTL）対応
-
-## ロードマップ（初期案）
-1. UI 骨子（言語選択、ON/OFF、テキスト表示）
-2. バックエンド：エフェメラルトークン発行エンドポイント
-3. Realtime API（WebRTC）接続の確立
-4. ストリーミング STT → 翻訳の連携と表示
-5. TTS 音声の受信・再生（低遅延化）
-6. エラーハンドリング・再接続・フォールバック
-7. 簡易 E2E 動作確認と調整
-
-## 参考
-- OpenAI Realtime API（公式ドキュメント）
-- WebRTC、MediaDevices.getUserMedia、AudioContext などのブラウザ API
-
----
-この README は要件の叩き台です。実装に合わせて随時アップデートします。

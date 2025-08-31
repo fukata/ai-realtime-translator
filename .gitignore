@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+coverage/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Editor/OS
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Misc
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
