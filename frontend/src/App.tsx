@@ -8,6 +8,7 @@ type ClientToken = {
 
 const DEFAULT_MODEL = 'gpt-4o-realtime-preview-2024-12-17';
 const DEFAULT_VOICE = 'verse';
+const VOICE_OPTIONS = ['verse', 'alloy', 'aria', 'breeze'];
 
 export function App() {
   const baseUrl = (import.meta as any).env?.VITE_SERVER_URL || '';
@@ -195,7 +196,13 @@ export function App() {
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span>Voice</span>
-          <input value={voice} onChange={(e) => setVoice(e.target.value)} />
+          <select value={voice} onChange={(e) => setVoice(e.target.value)}>
+            {VOICE_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span>Source</span>
