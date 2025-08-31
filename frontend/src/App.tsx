@@ -43,6 +43,8 @@ export function App() {
   const [copied, setCopied] = useState(false);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [micId, setMicId] = useState<string>('');
+  type NoiseProfile = 'default' | 'off';
+  const [noiseProfile, setNoiseProfile] = useState<NoiseProfile>('default');
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -219,11 +221,12 @@ export function App() {
         if (e.channel?.label === 'oai-events') bindChannel(e.channel);
       };
 
-      // Capture microphone with built-in noise processing
+      // Capture microphone with configurable noise processing
+      const useProcessing = noiseProfile === 'default';
       const audioConstraints: MediaTrackConstraints = {
-        noiseSuppression: true,
-        echoCancellation: true,
-        autoGainControl: true,
+        noiseSuppression: useProcessing,
+        echoCancellation: useProcessing,
+        autoGainControl: useProcessing,
         channelCount: 1,
         sampleRate: 48000,
       } as any;
@@ -400,6 +403,18 @@ export function App() {
                 {d.label || d.deviceId}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="text-sm flex items-center gap-2">
+          <span className="text-slate-700">ノイズ処理:</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={noiseProfile}
+            onChange={(e) => setNoiseProfile(e.target.value as NoiseProfile)}
+            title="マイク取得時のノイズ抑制/エコーキャンセル/オートゲインを切替"
+          >
+            <option value="default">現在の設定（抑制/キャンセル/自動調整）</option>
+            <option value="off">オフ</option>
           </select>
         </label>
         <button
