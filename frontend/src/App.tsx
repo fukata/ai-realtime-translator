@@ -37,7 +37,8 @@ export function App() {
   const [targetLang, setTargetLang] = useState('en');
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState('');
+  const [inputTranscript, setInputTranscript] = useState('');
+  const [outputTranscript, setOutputTranscript] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [micId, setMicId] = useState<string>('');
@@ -67,7 +68,8 @@ export function App() {
   async function connectWebRTC() {
     setStatus('connecting');
     setError(null);
-    setTranscript('');
+    setInputTranscript('');
+    setOutputTranscript('');
     setLogs([]);
     try {
       const token = await requestToken();
@@ -100,7 +102,7 @@ export function App() {
 
             // Primary: transcript from audio
             if (msg?.type === 'response.audio_transcript.delta' && typeof msg.delta === 'string') {
-              setTranscript((t) => t + msg.delta);
+              setOutputTranscript((t) => t + msg.delta);
             }
             if (msg?.type === 'response.audio_transcript.done') {
               setLogs((ls) => [...ls, 'audio_transcript_done']);
@@ -108,14 +110,26 @@ export function App() {
 
             // Fallback: legacy text delta
             if (msg?.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
-              setTranscript((t) => t + msg.delta);
+              setOutputTranscript((t) => t + msg.delta);
             }
             if (msg?.type === 'response.output_text.done') {
               setLogs((ls) => [...ls, 'text_done']);
             }
 
+            // Input side transcription (best effort)
+            if (msg?.type === 'input_audio_transcription.delta') {
+              const seg = (msg.delta ?? msg.text ?? msg.transcript) as string | undefined;
+              if (typeof seg === 'string') setInputTranscript((t) => t + seg);
+            }
+            if (
+              msg?.type === 'input_audio_transcription.done' ||
+              msg?.type === 'input_audio_transcription.completed'
+            ) {
+              setLogs((ls) => [...ls, 'input_transcript_done']);
+            }
+
             if (msg?.type === 'response.created') {
-              setTranscript('');
+              setOutputTranscript('');
             }
             if (msg?.type === 'response.completed') {
               // keep transcript as-is
@@ -134,6 +148,8 @@ export function App() {
               type: 'session.update',
               session: {
                 turn_detection: { type: 'server_vad' },
+                // Ask server to provide input audio transcription
+                input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
               },
             }),
           );
@@ -314,10 +330,18 @@ export function App() {
         <audio ref={remoteAudioRef} autoPlay playsInline />
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <h3 style={{ margin: '8px 0' }}>Transcript</h3>
-        <div style={{ whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: 12, minHeight: 80 }}>
-          {transcript || '—'}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+        <div>
+          <h3 style={{ margin: '8px 0' }}>Input Transcript ({sourceLang})</h3>
+          <div style={{ whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: 12, minHeight: 80 }}>
+            {inputTranscript || '—'}
+          </div>
+        </div>
+        <div>
+          <h3 style={{ margin: '8px 0' }}>Output Transcript ({targetLang})</h3>
+          <div style={{ whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: 12, minHeight: 80 }}>
+            {outputTranscript || '—'}
+          </div>
         </div>
       </div>
 
