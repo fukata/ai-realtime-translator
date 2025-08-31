@@ -63,18 +63,47 @@ const requireAccess: Handler = async (req, env) => {
 const handleHealth: Handler = () => textJson({ status: 'ok', worker: true });
 
 const handleToken: Handler = async (req, env) => {
-  // ここで将来的に OpenAI Realtime の短命トークンを発行する
   if (!env.OPENAI_API_KEY) {
     return textJson({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
   }
-  // 現時点では未実装
-  return textJson(
-    {
-      error: 'Not implemented',
-      message: 'Implement OpenAI Realtime ephemeral token issuance here.',
+
+  const DEFAULT_MODEL = 'gpt-4o-realtime-preview-2024-12-17';
+  let body: any = {};
+  try {
+    if (req.headers.get('content-type')?.includes('application/json')) {
+      body = await req.json();
+    }
+  } catch {
+    body = {};
+  }
+  const model = typeof body?.model === 'string' && body.model.length > 0 ? body.model : DEFAULT_MODEL;
+  const voice = typeof body?.voice === 'string' && body.voice.length > 0 ? body.voice : 'verse';
+
+  const resp = await fetch('https://api.openai.com/v1/realtime/sessions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
     },
-    { status: 501 },
-  );
+    body: JSON.stringify({ model, voice }),
+  });
+
+  const data = await resp.json().catch(() => ({}));
+
+  if (!resp.ok) {
+    return textJson({ error: 'openai_error', status: resp.status, details: data }, { status: 502 });
+  }
+
+  // 必要最小限だけ返す（APIキーは返さない）
+  const payload = {
+    id: data?.id,
+    model: data?.model,
+    client_secret: {
+      value: data?.client_secret?.value,
+      expires_at: data?.client_secret?.expires_at,
+    },
+  };
+  return textJson(payload, { status: 200 });
 };
 
 export default {
@@ -107,4 +136,3 @@ export default {
     return withCors(request, env, new Response('Not Found', { status: 404 }));
   },
 } satisfies ExportedHandler<Env>;
-

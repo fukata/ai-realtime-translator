@@ -38,3 +38,5 @@ Minimal monorepo scaffold for a realtime translation app.
 - Config: `worker/wrangler.toml` (`ALLOWED_ORIGINS`, `ALLOWED_EMAILS`, `DEV_BYPASS_ACCESS`).
 - Secrets: `wrangler secret put OPENAI_API_KEY`（本番では必ず Secret で設定）。
 - Access: Cloudflare Access を有効化し、許可メールを限定してください。
+- Token endpoint: `POST /api/token` with JSON `{ model?: string, voice?: string }`.
+- Default model: `gpt-4o-realtime-preview-2024-12-17`（変更可）。
