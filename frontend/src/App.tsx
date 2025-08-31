@@ -18,6 +18,10 @@ export function App() {
   const [targetLang, setTargetLang] = useState('en');
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState('');
+  const [logs, setLogs] = useState<string[]>([]);
+  const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
+  const [micId, setMicId] = useState<string>('');
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -44,6 +48,8 @@ export function App() {
   async function connectWebRTC() {
     setStatus('connecting');
     setError(null);
+    setTranscript('');
+    setLogs([]);
     try {
       const token = await requestToken();
 
@@ -66,9 +72,29 @@ export function App() {
       // Data channel to send events
       const dc = pc.createDataChannel('oai-events');
       dcRef.current = dc;
+      dc.addEventListener('message', (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          // Minimal text accumulation for translation/debug
+          if (msg?.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
+            setTranscript((t) => t + msg.delta);
+          }
+          if (msg?.type === 'response.output_text.done') {
+            setLogs((ls) => [...ls, 'text_done']);
+          }
+          if (msg?.type === 'response.error') {
+            setLogs((ls) => [...ls, `error: ${msg.error?.message || ''}`]);
+          }
+        } catch (_) {
+          // ignore non-JSON events
+        }
+      });
 
       // Capture microphone
-      const local = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints: MediaStreamConstraints = micId
+        ? { audio: { deviceId: { exact: micId } } as any }
+        : { audio: true };
+      const local = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = local;
       local.getTracks().forEach((t) => pc.addTrack(t, local));
 
@@ -142,6 +168,12 @@ export function App() {
   }
 
   useEffect(() => {
+    // List microphones for selection
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((ds) => setMics(ds.filter((d) => d.kind === 'audioinput')))
+      .catch(() => {});
+
     return () => {
       disconnect();
     };
@@ -176,6 +208,17 @@ export function App() {
       </div>
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
+        <label>
+          Mic:
+          <select value={micId} onChange={(e) => setMicId(e.target.value)} style={{ marginLeft: 8 }}>
+            <option value="">Default</option>
+            {mics.map((d) => (
+              <option key={d.deviceId} value={d.deviceId}>
+                {d.label || d.deviceId}
+              </option>
+            ))}
+          </select>
+        </label>
         <button onClick={connectWebRTC} disabled={busy || status === 'connected'}>
           {busy ? 'Connecting…' : 'Connect'}
         </button>
@@ -192,6 +235,20 @@ export function App() {
 
       <div style={{ marginTop: 16 }}>
         <audio ref={remoteAudioRef} autoPlay playsInline />
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <h3 style={{ margin: '8px 0' }}>Transcript</h3>
+        <div style={{ whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: 12, minHeight: 80 }}>
+          {transcript || '—'}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <h3 style={{ margin: '8px 0' }}>Logs</h3>
+        <pre style={{ background: '#f6f8fa', padding: 12, maxHeight: 160, overflow: 'auto' }}>
+          {logs.join('\n')}
+        </pre>
       </div>
     </div>
   );

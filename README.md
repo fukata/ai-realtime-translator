@@ -18,8 +18,9 @@
 3. 開発サーバー:
    - Workers（API）: `pnpm --filter worker dev` → `http://localhost:8787`
    - Frontend: `pnpm --filter frontend dev` → `http://localhost:5173`
-4. フロント画面で「Request Token」を押すと `/api/token` を呼び出します。
-   - `VITE_SERVER_URL` が設定されていればその値（例: `http://localhost:8787` や本番の Workers URL）に対してリクエストします。
+4. フロント画面で「Connect」を押すと `/api/token` から短命トークンを取得し、WebRTC で OpenAI Realtime に接続します。
+   - `VITE_SERVER_URL` が設定されていればその値に対して `/api/token` を呼びます。
+   - マイク許可が必要です。必要に応じて入力デバイス（Mic）を選択してください。
 
 ## ビルド / テスト / フォーマット
 
