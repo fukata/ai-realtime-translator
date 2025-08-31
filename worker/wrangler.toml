@@ -15,3 +15,18 @@ DEV_BYPASS_ACCESS = "true"
 
 # 本番用のシークレットは wrangler secret で設定してください:
 #   wrangler secret put OPENAI_API_KEY
+
+# =============================
+# Production environment
+# =============================
+[env.production]
+# name を上書きしない場合、production は既定の名前でデプロイされます
+# name = "ai-realtime-translator-worker"
+
+[env.production.vars]
+# 本番のフロントドメイン（Pages など）を設定してください（カンマ区切り可）
+ALLOWED_ORIGINS = ""
+# 許可メール（Access と二重で制限する場合に設定。カンマ区切り）
+ALLOWED_EMAILS = ""
+# 本番では必ず Access バイパスを無効化
+DEV_BYPASS_ACCESS = "false"

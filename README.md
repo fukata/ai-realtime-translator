@@ -81,6 +81,16 @@
    - `npx wrangler pages secret put VITE_SERVER_URL --project-name ai-realtime-translator`
 3. Git 連携で Pages にビルドさせるか、`wrangler pages deploy` で静的成果物をアップロード。
 
+## 本番環境の切り替え（wrangler 環境）
+
+- `worker/wrangler.toml` に `[env.production]` と `[env.production.vars]` を追加済みです。
+  - 本番では `DEV_BYPASS_ACCESS = "false"` に固定。
+  - `ALLOWED_ORIGINS` に Pages の本番ドメイン（例: `https://<your>.pages.dev` または独自ドメイン）を設定。
+  - `ALLOWED_EMAILS` に許可するメールアドレスを設定（Access と併用で二重に制限）。
+- デプロイ/Secret のコマンド例:
+  - デプロイ: `npx wrangler deploy --env production`
+  - Secret 登録: `npx wrangler secret put OPENAI_API_KEY --env production`
+
 ## デプロイ（概要）
 
 1. Workers: `OPENAI_API_KEY` を Secret として登録しデプロイ。
