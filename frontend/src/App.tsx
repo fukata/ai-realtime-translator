@@ -64,6 +64,17 @@ export function App() {
 
   const serverUrl = useMemo(() => (baseUrl ? baseUrl.replace(/\/$/, '') : ''), [baseUrl]);
 
+  // localStorage keys
+  const LS_KEYS = {
+    model: 'prefs:model',
+    voice: 'prefs:voice',
+    source: 'prefs:sourceLang',
+    target: 'prefs:targetLang',
+    micId: 'prefs:micId',
+    noise: 'prefs:noiseProfile',
+    playback: 'prefs:audioPlayback',
+  } as const;
+
   async function requestToken(): Promise<ClientToken> {
     const url = serverUrl ? `${serverUrl}/api/token` : '/api/token';
     const res = await fetch(url, {
@@ -411,6 +422,28 @@ export function App() {
     };
   }, []);
 
+  // Load saved preferences on mount
+  useEffect(() => {
+    try {
+      const m = localStorage.getItem(LS_KEYS.model); if (m) setModel(m);
+      const v = localStorage.getItem(LS_KEYS.voice); if (v) setVoice(v);
+      const s = localStorage.getItem(LS_KEYS.source); if (s) setSourceLang(s);
+      const t = localStorage.getItem(LS_KEYS.target); if (t) setTargetLang(t);
+      const mic = localStorage.getItem(LS_KEYS.micId); if (mic) setMicId(mic);
+      const nz = localStorage.getItem(LS_KEYS.noise) as NoiseProfile | null; if (nz === 'default' || nz === 'off' || nz === 'rnnoise') setNoiseProfile(nz);
+      const pb = localStorage.getItem(LS_KEYS.playback) as AudioPlayback | null; if (pb === 'on' || pb === 'off') setAudioPlayback(pb);
+    } catch {}
+  }, []);
+
+  // Persist preferences when changed
+  useEffect(() => { try { localStorage.setItem(LS_KEYS.model, model); } catch {} }, [model]);
+  useEffect(() => { try { localStorage.setItem(LS_KEYS.voice, voice); } catch {} }, [voice]);
+  useEffect(() => { try { localStorage.setItem(LS_KEYS.source, sourceLang); } catch {} }, [sourceLang]);
+  useEffect(() => { try { localStorage.setItem(LS_KEYS.target, targetLang); } catch {} }, [targetLang]);
+  useEffect(() => { try { localStorage.setItem(LS_KEYS.micId, micId); } catch {} }, [micId]);
+  useEffect(() => { try { localStorage.setItem(LS_KEYS.noise, noiseProfile); } catch {} }, [noiseProfile]);
+  useEffect(() => { try { localStorage.setItem(LS_KEYS.playback, audioPlayback); } catch {} }, [audioPlayback]);
+
   // Reflect audio playback setting immediately
   useEffect(() => {
     const el = remoteAudioRef.current;
@@ -617,6 +650,32 @@ export function App() {
           disabled={status !== 'connected' && status !== 'error'}
         >
           Disconnect
+        </button>
+        <button
+          className="px-3 py-1.5 rounded bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+          onClick={() => {
+            try {
+              localStorage.removeItem(LS_KEYS.model);
+              localStorage.removeItem(LS_KEYS.voice);
+              localStorage.removeItem(LS_KEYS.source);
+              localStorage.removeItem(LS_KEYS.target);
+              localStorage.removeItem(LS_KEYS.micId);
+              localStorage.removeItem(LS_KEYS.noise);
+              localStorage.removeItem(LS_KEYS.playback);
+            } catch {}
+            // reset to defaults
+            setModel(DEFAULT_MODEL);
+            setVoice(DEFAULT_VOICE);
+            setSourceLang('ja');
+            setTargetLang('en');
+            setMicId('');
+            setNoiseProfile('default');
+            setAudioPlayback('on');
+            setLogs((ls) => [...ls, 'settings_reset']);
+          }}
+          title="保存済みの設定をデフォルトに戻します"
+        >
+          設定をリセット
         </button>
         <small className="text-slate-600">Server URL: {serverUrl || 'http://localhost:8787'}</small>
         <small className="text-slate-600">Status: {status}</small>
