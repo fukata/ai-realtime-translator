@@ -17,6 +17,10 @@ coverage/
 .vscode/
 .idea/
 
+# Cloudflare Wrangler local state
+.wrangler/
+worker/.wrangler/
+
 # Misc
 pnpm-lock.yaml
 package-lock.json
