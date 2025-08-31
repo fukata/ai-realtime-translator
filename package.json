@@ -10,7 +10,8 @@
     "dev": "echo 'Use package-level dev scripts: frontend/worker'",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "format": "pnpm -r format"
+    "format": "pnpm -r format",
+    "deploy": "bash scripts/deploy.sh"
   },
   "workspaces": [
     "frontend",

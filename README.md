@@ -97,6 +97,17 @@
 3. Access: Pages/Workers 両方に許可メール限定ポリシーを適用。
 4. レート制限: Cloudflare のルールを `/api/token` に適用。
 
+### 簡易デプロイコマンド
+
+- 前提: `wrangler` にログイン済み、Pages プロジェクト作成済み。
+- 実行例:
+  - `PAGES_PROJECT=ai-realtime-translator CF_ENV=production VITE_SERVER_URL="https://<your-worker>.workers.dev" npm run deploy`
+- 挙動:
+  - `worker/` を `wrangler deploy --env $CF_ENV` でデプロイ
+  - `frontend/` をローカルビルド（`VITE_SERVER_URL` が設定されている場合は埋め込み）
+  - `wrangler pages deploy frontend/dist --project-name $PAGES_PROJECT` で Pages に反映
+
+
 ## 補足
 
 - サーバー（Express）は廃止し、本番/開発ともに `worker/` を前提とします。
