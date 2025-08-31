@@ -10,6 +10,7 @@ const DEFAULT_MODEL = 'gpt-4o-realtime-preview-2024-12-17';
 const DEFAULT_VOICE = 'verse';
 const VOICE_OPTIONS = ['verse', 'alloy', 'aria', 'breeze'];
 const MODEL_OPTIONS = [
+  'gpt-realtime',
   'gpt-4o-realtime-preview-2024-12-17',
 ];
 const LANGUAGE_OPTIONS: { code: string; label: string }[] = [
