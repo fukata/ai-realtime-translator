@@ -331,7 +331,7 @@ export function App() {
       <h1 className="text-2xl font-semibold">AI Realtime Translator</h1>
 
       <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
           <span className="text-slate-700">Model</span>
           <select
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
