@@ -2,8 +2,8 @@
 // Expects 480-sample frames at 48kHz; buffers render quanta (128) and processes in 480-chunks.
 // If sampleRate != 48000 or RNNoise not ready, passes through.
 
-// Import ESM module inside worklet scope
-import { Rnnoise } from '@shiguredo/rnnoise-wasm';
+// Load RNNoise ESM dynamically from a public URL so that production can resolve it
+// The file is copied into `public/vendor/rnnoise.js` at build/dev startup.
 
 // Minimal ambient declarations to satisfy TypeScript in the worklet context
 declare const sampleRate: number;
@@ -42,18 +42,21 @@ class RnnoiseProcessor extends AudioWorkletProcessor {
       this.rsStepUp = 1;
       this.dsStepDown = 1;
     }
-    // Load RNNoise asynchronously
-    Rnnoise.load()
-      .then((rn) => {
+    // Load RNNoise asynchronously (from public/vendor/rnnoise.js)
+    (async () => {
+      try {
+        const rnUrl = new URL('../../vendor/rnnoise.js', import.meta.url).href;
+        const mod: any = await import(/* @vite-ignore */ rnUrl);
+        const rn = await mod.Rnnoise.load();
         if (this.bypass) return;
         this.denoiser = rn.createDenoiseState();
         this.ready = true;
         try { this.port.postMessage({ type: 'rnnoise.status', status: this.rsEnabled ? 'resampling' : 'ready' }); } catch {}
-      })
-      .catch(() => {
+      } catch (e) {
         this.bypass = true;
         try { this.port.postMessage({ type: 'rnnoise.status', status: 'bypass', reason: 'init_error' }); } catch {}
-      });
+      }
+    })();
     // handle messages (optional) for future controls
     this.port.onmessage = (ev) => {
       if (ev.data === 'bypass:on') this.bypass = true;
