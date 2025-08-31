@@ -330,7 +330,7 @@ export function App() {
     <div className="mx-auto max-w-5xl p-3 font-sans">
       <h1 className="text-2xl font-semibold">AI Realtime Translator</h1>
 
-      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-slate-700">Model</span>
           <select
@@ -388,6 +388,21 @@ export function App() {
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm">
+          <span className="text-slate-700">Mic</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={micId}
+            onChange={(e) => setMicId(e.target.value)}
+          >
+            <option value="">Default</option>
+            {mics.map((d) => (
+              <option key={d.deviceId} value={d.deviceId}>
+                {d.label || d.deviceId}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
           <span className="text-slate-700">ノイズ処理</span>
           <select
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
@@ -402,21 +417,6 @@ export function App() {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <label className="text-sm flex items-center gap-2">
-          <span className="text-slate-700">Mic:</span>
-          <select
-            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
-            value={micId}
-            onChange={(e) => setMicId(e.target.value)}
-          >
-            <option value="">Default</option>
-            {mics.map((d) => (
-              <option key={d.deviceId} value={d.deviceId}>
-                {d.label || d.deviceId}
-              </option>
-            ))}
-          </select>
-        </label>
         <button
           className="px-3 py-1.5 rounded bg-indigo-600 text-white disabled:opacity-50"
           onClick={connectWebRTC}
