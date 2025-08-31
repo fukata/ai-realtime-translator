@@ -218,7 +218,10 @@ export function App() {
               msg?.type === 'conversation.item.input_audio_transcript.delta'
             ) {
               const seg = (msg.delta ?? msg.text ?? msg.transcript) as string | undefined;
-              if (typeof seg === 'string') setInputTranscript((t) => t + seg);
+              if (typeof seg === 'string') {
+                inputBufferRef.current += seg;
+                setInputTranscript((t) => t + seg);
+              }
             }
             if (
               msg?.type === 'conversation.item.input_audio_transcription.completed' ||
