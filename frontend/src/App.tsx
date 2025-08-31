@@ -88,33 +88,63 @@ export function App() {
         }
       };
 
-      // Data channel to send events
-      const dc = pc.createDataChannel('oai-events');
-      dcRef.current = dc;
-      dc.addEventListener('message', (ev) => {
-        try {
-          const msg = JSON.parse(ev.data);
-          // Minimal text accumulation for translation/debug
-          if (msg?.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
-            setTranscript((t) => t + msg.delta);
+      // Helper to bind handlers to any datachannel
+      const bindChannel = (dc: RTCDataChannel) => {
+        dcRef.current = dc;
+        dc.binaryType = 'arraybuffer';
+        dc.addEventListener('message', (ev) => {
+          try {
+            if (typeof ev.data !== 'string') return; // ignore binary for now
+            const msg = JSON.parse(ev.data);
+            if (msg?.type) setLogs((ls) => [...ls, String(msg.type)]);
+            if (msg?.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
+              setTranscript((t) => t + msg.delta);
+            }
+            if (msg?.type === 'response.output_text.done') {
+              setLogs((ls) => [...ls, 'text_done']);
+            }
+            if (msg?.type === 'response.created') {
+              setTranscript('');
+            }
+            if (msg?.type === 'response.completed') {
+              // keep transcript as-is
+            }
+            if (msg?.type === 'response.error') {
+              setError(msg.error?.message || 'response error');
+            }
+          } catch (e) {
+            // non-JSON payloads are ignored
           }
-          if (msg?.type === 'response.output_text.done') {
-            setLogs((ls) => [...ls, 'text_done']);
-          }
-          if (msg?.type === 'response.created') {
-            setTranscript('');
-            setLogs((ls) => [...ls, 'response_created']);
-          }
-          if (msg?.type === 'response.completed') {
-            setLogs((ls) => [...ls, 'response_completed']);
-          }
-          if (msg?.type === 'response.error') {
-            setLogs((ls) => [...ls, `error: ${msg.error?.message || ''}`]);
-          }
-        } catch (_) {
-          // ignore non-JSON events
-        }
-      });
+        });
+        dc.addEventListener('open', () => {
+          // Enable server-side VAD so the model responds after you finish speaking
+          dc.send(
+            JSON.stringify({
+              type: 'session.update',
+              session: {
+                turn_detection: { type: 'server_vad' },
+              },
+            }),
+          );
+
+          const msg = {
+            type: 'response.create',
+            response: {
+              instructions:
+                `You are a real-time speech translator. Listen to the user's speech in ${sourceLang} and translate into ${targetLang}. Respond concisely in ${targetLang}.`,
+              modalities: ['audio', 'text'],
+              audio: { voice },
+            },
+          } as const;
+          dc.send(JSON.stringify(msg));
+        });
+      };
+
+      // Create our control channel and also bind if remote creates one
+      bindChannel(pc.createDataChannel('oai-events'));
+      pc.ondatachannel = (e) => {
+        if (e.channel?.label === 'oai-events') bindChannel(e.channel);
+      };
 
       // Capture microphone
       const constraints: MediaStreamConstraints = micId
@@ -149,20 +179,6 @@ export function App() {
           setError(`Peer connection ${pc.connectionState}`);
         }
       };
-
-      // When data channel opens, send initial instruction for translation
-      dc.addEventListener('open', () => {
-        const msg = {
-          type: 'response.create',
-          response: {
-            instructions:
-              `You are a real-time speech translator. Listen to the user's speech in ${sourceLang} and translate into ${targetLang}. Respond concisely in ${targetLang}.`,
-            modalities: ['audio', 'text'],
-            audio: { voice },
-          },
-        };
-        dc.send(JSON.stringify(msg));
-      });
 
       setStatus('connected');
     } catch (e: any) {
