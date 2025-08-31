@@ -3,17 +3,15 @@ set -euo pipefail
 
 # Simple deployment helper for Cloudflare Worker + Pages
 # Usage:
-#   PAGES_PROJECT=<pages-project-name> CF_ENV=production VITE_SERVER_URL=https://<worker-url> ./scripts/deploy.sh
+#   PAGES_PROJECT=<pages-project-name> VITE_SERVER_URL=https://<worker-url> ./scripts/deploy.sh
 # Defaults:
-#   CF_ENV=production
 #   PAGES_PROJECT=ai-realtime-translator
 
-CF_ENV="${CF_ENV:-production}"
 PAGES_PROJECT="${PAGES_PROJECT:-ai-realtime-translator}"
 # Default frontend API endpoint if not specified
 VITE_SERVER_URL="${VITE_SERVER_URL:-https://ai-realtime-translator.fukata.dev}"
 
-echo "[deploy] CF_ENV=${CF_ENV} PAGES_PROJECT=${PAGES_PROJECT}"
+echo "[deploy] PAGES_PROJECT=${PAGES_PROJECT} VITE_SERVER_URL=${VITE_SERVER_URL}"
 
 run() { echo "+ $*"; "$@"; }
 
@@ -21,7 +19,7 @@ run() { echo "+ $*"; "$@"; }
 echo "[deploy] Deploying Worker..."
 (
   cd "$(dirname "$0")/../worker"
-  run npx --yes wrangler deploy --env "${CF_ENV}"
+  run npx --yes wrangler deploy"
 )
 
 # 2) Build Frontend (optionally inject VITE_SERVER_URL)
