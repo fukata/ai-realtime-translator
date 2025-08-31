@@ -61,6 +61,17 @@ export function App() {
   const analyserOutRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number | null>(null);
 
+  function pushChat(role: 'input' | 'output', text: string) {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return;
+    setChat((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.role === role && last.text === trimmed) return prev;
+      return [...prev, { id: `${Date.now()}-${role}`, role, text: trimmed, at: Date.now() }];
+    });
+    setLogs((ls) => [...ls, `chat_${role}:len=${trimmed.length}`]);
+  }
+
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -152,7 +163,7 @@ export function App() {
             if (msg?.type === 'response.audio_transcript.done') {
               setLogs((ls) => [...ls, 'audio_transcript_done']);
               const text = (outputBufferRef.current || '').trim();
-              if (text) setChat((c) => [...c, { id: `${Date.now()}-out`, role: 'output', text, at: Date.now() }]);
+              pushChat('output', text);
               setOutputTranscript('');
               outputBufferRef.current = '';
             }
@@ -165,7 +176,7 @@ export function App() {
             if (msg?.type === 'response.output_text.done') {
               setLogs((ls) => [...ls, 'text_done']);
               const text = (outputBufferRef.current || '').trim();
-              if (text) setChat((c) => [...c, { id: `${Date.now()}-out`, role: 'output', text, at: Date.now() }]);
+              pushChat('output', text);
               setOutputTranscript('');
               outputBufferRef.current = '';
             }
@@ -197,7 +208,7 @@ export function App() {
             ) {
               setLogs((ls) => [...ls, 'input_transcript_done']);
               const text = (inputBufferRef.current || '').trim();
-              if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
+              pushChat('input', text);
               setInputTranscript('');
               inputBufferRef.current = '';
             }
@@ -215,7 +226,7 @@ export function App() {
             ) {
               setLogs((ls) => [...ls, 'conv_input_transcript_done']);
               const text = (inputBufferRef.current || '').trim();
-              if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
+              pushChat('input', text);
               setInputTranscript('');
               inputBufferRef.current = '';
             }
@@ -227,7 +238,7 @@ export function App() {
             if (msg?.type === 'response.input_text.done') {
               setLogs((ls) => [...ls, 'input_text_done']);
               const text = (inputBufferRef.current || '').trim();
-              if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
+              pushChat('input', text);
               setInputTranscript('');
               inputBufferRef.current = '';
             }
