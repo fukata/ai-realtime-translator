@@ -47,6 +47,7 @@ export function App() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const sessionReadyRef = useRef<boolean>(false);
 
   const serverUrl = useMemo(() => (baseUrl ? baseUrl.replace(/\/$/, '') : ''), [baseUrl]);
 
@@ -100,6 +101,14 @@ export function App() {
             const msg = JSON.parse(ev.data);
             if (msg?.type) setLogs((ls) => [...ls, String(msg.type)]);
 
+            // Surface error details
+            if (msg?.type === 'error') {
+              const message = (msg.error?.message || msg.message || '') as string | undefined;
+              if (message) setLogs((ls) => [...ls, `error: ${message}`]);
+              setError(message || 'error');
+              return;
+            }
+
             // Primary: transcript from audio
             if (msg?.type === 'response.audio_transcript.delta' && typeof msg.delta === 'string') {
               setOutputTranscript((t) => t + msg.delta);
@@ -137,6 +146,23 @@ export function App() {
             if (msg?.type === 'response.completed') {
               // keep transcript as-is
             }
+            if (msg?.type === 'session.updated') {
+              sessionReadyRef.current = true;
+              // send first response.create only after session is ready
+              try {
+                dc.send(
+                  JSON.stringify({
+                    type: 'response.create',
+                    response: {
+                      instructions:
+                        `Translate the user's speech from ${sourceLang} to ${targetLang}. Always answer only in ${targetLang}.`,
+                      modalities: ['audio', 'text'],
+                      audio: { voice },
+                    },
+                  }),
+                );
+              } catch {}
+            }
             if (msg?.type === 'response.error') {
               setError(msg.error?.message || 'response error');
             }
@@ -152,22 +178,14 @@ export function App() {
               session: {
                 turn_detection: { type: 'server_vad' },
                 // Ask server to provide input audio transcription
-                input_audio_transcription: { model: 'gpt-4o-mini-transcribe', language: sourceLang },
+                input_audio_transcription: { model: 'whisper-1', language: sourceLang },
                 // Enforce translation behavior at session (system) level for consistency
                 instructions:
                   `You are a real-time speech translator. Translate any spoken input into ${targetLang}. Always respond ONLY in ${targetLang} with concise, natural phrasing. Do not include the source text or any explanations.`,
               },
             }),
           );
-
-          const msg = {
-            type: 'response.create',
-            response: {
-              modalities: ['audio', 'text'],
-              audio: { voice },
-            },
-          } as const;
-          dc.send(JSON.stringify(msg));
+          sessionReadyRef.current = false;
         });
       };
 
