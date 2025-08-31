@@ -3,12 +3,14 @@ import { useState } from 'react';
 export function App() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const baseUrl = (import.meta as any).env?.VITE_SERVER_URL || '';
 
   const getToken = async () => {
     setLoading(true);
     setResult('');
     try {
-      const res = await fetch('/api/token', {
+      const url = baseUrl ? `${baseUrl.replace(/\/$/, '')}/api/token` : '/api/token';
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -30,7 +32,7 @@ export function App() {
         <button onClick={getToken} disabled={loading}>
           {loading ? 'Requesting…' : 'Request Token'}
         </button>
-        <small>Server URL: {import.meta.env.VITE_SERVER_URL || 'http://localhost:8787'}</small>
+        <small>Server URL: {baseUrl || 'http://localhost:8787'}</small>
       </div>
       {result && (
         <pre style={{ marginTop: 16, background: '#f6f8fa', padding: 12 }}>
@@ -40,4 +42,3 @@ export function App() {
     </div>
   );
 }
-
