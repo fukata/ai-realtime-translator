@@ -48,6 +48,7 @@ export function App() {
   type AudioPlayback = 'on' | 'off';
   const [audioPlayback, setAudioPlayback] = useState<AudioPlayback>('on');
   const [rnnoiseState, setRnnoiseState] = useState<'idle' | 'loading' | 'ready' | 'resampling' | 'bypass'>('idle');
+  const reconnectTimerRef = useRef<number | null>(null);
   const [showWaveform, setShowWaveform] = useState(true);
   const inputCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const outputCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -457,20 +458,48 @@ export function App() {
     }
   }, [audioPlayback]);
 
-  // Auto-reconnect when RNNoise option changes during an active session
-  useEffect(() => {
+  function scheduleReconnect(reason: string) {
     if (status !== 'connected') return;
-    setLogs((ls) => [...ls, `auto_reconnect: noiseProfile=${noiseProfile}`]);
-    (async () => {
+    setLogs((ls) => [...ls, `auto_reconnect: ${reason}`]);
+    if (reconnectTimerRef.current) window.clearTimeout(reconnectTimerRef.current);
+    reconnectTimerRef.current = window.setTimeout(async () => {
+      reconnectTimerRef.current = null;
       try {
         await disconnect();
         await connectWebRTC();
       } catch (e) {
         setError(`auto reconnect failed: ${String((e as any)?.message || e)}`);
       }
-    })();
+    }, 300);
+  }
+
+  // Auto-reconnect when RNNoise option changes during an active session
+  useEffect(() => {
+    scheduleReconnect(`noiseProfile=${noiseProfile}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noiseProfile]);
+
+  // Auto-reconnect for other key options
+  useEffect(() => {
+    scheduleReconnect(`model=${model}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model]);
+  useEffect(() => {
+    scheduleReconnect(`voice=${voice}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voice]);
+  useEffect(() => {
+    scheduleReconnect(`micId=${micId || 'default'}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [micId]);
+  useEffect(() => {
+    scheduleReconnect(`sourceLang=${sourceLang}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourceLang]);
+  useEffect(() => {
+    scheduleReconnect(`targetLang=${targetLang}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetLang]);
 
   function startWaveformDraw() {
     const draw = () => {
