@@ -140,6 +140,20 @@ export function App() {
             ) {
               setLogs((ls) => [...ls, 'input_transcript_done']);
             }
+            // Realtime sometimes emits conversation-scoped input transcription events
+            if (
+              msg?.type === 'conversation.item.input_audio_transcription.delta' ||
+              msg?.type === 'conversation.item.input_audio_transcript.delta'
+            ) {
+              const seg = (msg.delta ?? msg.text ?? msg.transcript) as string | undefined;
+              if (typeof seg === 'string') setInputTranscript((t) => t + seg);
+            }
+            if (
+              msg?.type === 'conversation.item.input_audio_transcription.completed' ||
+              msg?.type === 'conversation.item.input_audio_transcript.completed'
+            ) {
+              setLogs((ls) => [...ls, 'conv_input_transcript_done']);
+            }
             // Some builds emit input as response.input_text.*
             if (msg?.type === 'response.input_text.delta' && typeof msg.delta === 'string') {
               setInputTranscript((t) => t + msg.delta);
@@ -166,6 +180,7 @@ export function App() {
                         `Translate the user's speech from ${sourceLang} to ${targetLang}. Always answer only in ${targetLang}.`,
                       modalities: ['audio', 'text'],
                       voice: voice,
+                      conversation: 'none',
                     },
                   }),
                 );
