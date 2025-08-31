@@ -345,7 +345,7 @@ export function App() {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
           <span className="text-slate-700">Voice</span>
           <select
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
@@ -359,7 +359,7 @@ export function App() {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
           <span className="text-slate-700">Source</span>
           <select
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
@@ -373,7 +373,7 @@ export function App() {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
           <span className="text-slate-700">Target</span>
           <select
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
@@ -387,7 +387,7 @@ export function App() {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
           <span className="text-slate-700">Mic</span>
           <select
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
@@ -402,7 +402,7 @@ export function App() {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
           <span className="text-slate-700">ノイズ処理</span>
           <select
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
