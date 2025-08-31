@@ -411,10 +411,10 @@ export function App() {
             className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
             value={noiseProfile}
             onChange={(e) => setNoiseProfile(e.target.value as NoiseProfile)}
-            title="マイク取得時のノイズ抑制/エコーキャンセル/オートゲインを切替"
+            title="getUserMedia constraints: noiseSuppression / echoCancellation / autoGainControl"
           >
-            <option value="default">現在の設定（抑制/キャンセル/自動調整）</option>
-            <option value="off">オフ</option>
+            <option value="default">noiseSuppression, echoCancellation, autoGainControl</option>
+            <option value="off">noiseSuppression=false, echoCancellation=false, autoGainControl=false</option>
           </select>
         </label>
         <button
