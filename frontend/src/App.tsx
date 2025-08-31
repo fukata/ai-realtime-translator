@@ -646,11 +646,16 @@ export function App() {
         {showWaveform && (
           <>
             <div>
-              <h3 className="my-2 font-medium">Input Waveform</h3>
+              <h3 className="my-2 font-medium">マイク入力（処理前）</h3>
               <canvas ref={inputCanvasRef} width={560} height={100} className="w-full bg-slate-100 rounded border border-slate-200" />
             </div>
             <div>
-              <h3 className="my-2 font-medium">Output Waveform</h3>
+              <div className="flex items-center gap-2 my-2">
+                <h3 className="m-0 font-medium">ノイズ抑制後（処理後）</h3>
+                <span className="text-xs px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700">
+                  {noiseProfile === 'rnnoise' ? 'RNNoise' : noiseProfile === 'default' ? 'ブラウザDSP' : '未適用'}
+                </span>
+              </div>
               <canvas ref={outputCanvasRef} width={560} height={100} className="w-full bg-slate-100 rounded border border-slate-200" />
             </div>
           </>
@@ -667,6 +672,11 @@ export function App() {
             {outputTranscript || '—'}
           </div>
         </div>
+        {showWaveform && (
+          <p className="col-span-1 md:col-span-2 text-xs text-slate-600">
+            注: RNNoise 選択時のみ「処理後」波形はノイズ抑制後を表示します。その他の設定では可視化用途のため入力波形を複製表示しています。
+          </p>
+        )}
       </div>
 
       <div className="mt-4">
