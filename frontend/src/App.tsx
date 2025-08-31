@@ -9,6 +9,23 @@ type ClientToken = {
 const DEFAULT_MODEL = 'gpt-4o-realtime-preview-2024-12-17';
 const DEFAULT_VOICE = 'verse';
 const VOICE_OPTIONS = ['verse', 'alloy', 'aria', 'breeze'];
+const MODEL_OPTIONS = [
+  'gpt-4o-realtime-preview-2024-12-17',
+];
+const LANGUAGE_OPTIONS: { code: string; label: string }[] = [
+  { code: 'ja', label: 'Japanese (ja)' },
+  { code: 'en', label: 'English (en)' },
+  { code: 'zh', label: 'Chinese (zh)' },
+  { code: 'ko', label: 'Korean (ko)' },
+  { code: 'fr', label: 'French (fr)' },
+  { code: 'de', label: 'German (de)' },
+  { code: 'es', label: 'Spanish (es)' },
+  { code: 'pt', label: 'Portuguese (pt)' },
+  { code: 'hi', label: 'Hindi (hi)' },
+  { code: 'vi', label: 'Vietnamese (vi)' },
+  { code: 'th', label: 'Thai (th)' },
+  { code: 'id', label: 'Indonesian (id)' },
+];
 
 export function App() {
   const baseUrl = (import.meta as any).env?.VITE_SERVER_URL || '';
@@ -192,7 +209,13 @@ export function App() {
       <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span>Model</span>
-          <input value={model} onChange={(e) => setModel(e.target.value)} />
+          <select value={model} onChange={(e) => setModel(e.target.value)}>
+            {MODEL_OPTIONS.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span>Voice</span>
@@ -206,11 +229,23 @@ export function App() {
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span>Source</span>
-          <input value={sourceLang} onChange={(e) => setSourceLang(e.target.value)} />
+          <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
+            {LANGUAGE_OPTIONS.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span>Target</span>
-          <input value={targetLang} onChange={(e) => setTargetLang(e.target.value)} />
+          <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
+            {LANGUAGE_OPTIONS.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
