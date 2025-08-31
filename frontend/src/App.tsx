@@ -45,6 +45,8 @@ export function App() {
   const [micId, setMicId] = useState<string>('');
   type NoiseProfile = 'default' | 'off' | 'rnnoise';
   const [noiseProfile, setNoiseProfile] = useState<NoiseProfile>('default');
+  type AudioPlayback = 'on' | 'off';
+  const [audioPlayback, setAudioPlayback] = useState<AudioPlayback>('on');
   const [rnnoiseState, setRnnoiseState] = useState<'idle' | 'loading' | 'ready' | 'bypass'>('idle');
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -90,8 +92,14 @@ export function App() {
         const [stream] = event.streams;
         if (remoteAudioRef.current) {
           remoteAudioRef.current.srcObject = stream;
-          // Autoplay: ensure play is attempted
-          remoteAudioRef.current.play().catch(() => {});
+          // Autoplay control based on setting
+          if (audioPlayback === 'on') {
+            remoteAudioRef.current.muted = false;
+            remoteAudioRef.current.play().catch(() => {});
+          } else {
+            remoteAudioRef.current.muted = true;
+            try { remoteAudioRef.current.pause(); } catch {}
+          }
         }
       };
 
@@ -336,6 +344,12 @@ export function App() {
     localStreamRef.current = null;
     setStatus('idle');
     setRnnoiseState('idle');
+    try {
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = null;
+        remoteAudioRef.current.pause();
+      }
+    } catch {}
   }
 
   useEffect(() => {
@@ -349,6 +363,19 @@ export function App() {
       disconnect();
     };
   }, []);
+
+  // Reflect audio playback setting immediately
+  useEffect(() => {
+    const el = remoteAudioRef.current;
+    if (!el) return;
+    if (audioPlayback === 'on') {
+      el.muted = false;
+      el.play().catch(() => {});
+    } else {
+      el.muted = true;
+      try { el.pause(); } catch {}
+    }
+  }, [audioPlayback]);
 
   // Auto-reconnect when RNNoise option changes during an active session
   useEffect(() => {
@@ -393,7 +420,7 @@ export function App() {
     <div className="mx-auto max-w-5xl p-3 font-sans">
       <h1 className="text-2xl font-semibold">AI Realtime Translator</h1>
 
-      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-7">
         <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
           <span className="text-slate-700">Model</span>
           <select
@@ -476,6 +503,18 @@ export function App() {
             <option value="default">noiseSuppression, echoCancellation, autoGainControl</option>
             <option value="off">noiseSuppression=false, echoCancellation=false, autoGainControl=false</option>
             <option value="rnnoise">RNNoise (WASM, 48kHz/mono)</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm border border-slate-200 rounded-md p-2">
+          <span className="text-slate-700">音声再生</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={audioPlayback}
+            onChange={(e) => setAudioPlayback(e.target.value as AudioPlayback)}
+            title="Remote audio playback (element mute/play)"
+          >
+            <option value="on">再生する</option>
+            <option value="off">再生しない（ミュート）</option>
           </select>
         </label>
       </div>
