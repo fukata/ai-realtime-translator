@@ -7,7 +7,7 @@ type ClientToken = {
 };
 
 const DEFAULT_MODEL = 'gpt-realtime';
-const DEFAULT_VOICE = 'verse';
+const DEFAULT_VOICE = 'alloy';
 const VOICE_OPTIONS = ['verse', 'alloy', 'aria', 'breeze'];
 const MODEL_OPTIONS = [
   'gpt-realtime',

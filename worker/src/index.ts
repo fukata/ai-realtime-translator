@@ -77,7 +77,7 @@ const handleToken: Handler = async (req, env) => {
     body = {};
   }
   const model = typeof body?.model === 'string' && body.model.length > 0 ? body.model : DEFAULT_MODEL;
-  const voice = typeof body?.voice === 'string' && body.voice.length > 0 ? body.voice : 'verse';
+  const voice = typeof body?.voice === 'string' && body.voice.length > 0 ? body.voice : 'alloy';
 
   const resp = await fetch('https://api.openai.com/v1/realtime/sessions', {
     method: 'POST',
