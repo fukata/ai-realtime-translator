@@ -19,7 +19,7 @@ run() { echo "+ $*"; "$@"; }
 echo "[deploy] Deploying Worker..."
 (
   cd "$(dirname "$0")/../worker"
-  run npx --yes wrangler deploy"
+  run npx --yes wrangler deploy
 )
 
 # 2) Build Frontend (optionally inject VITE_SERVER_URL)
@@ -27,7 +27,7 @@ echo "[deploy] Building Frontend..."
 (
   cd "$(dirname "$0")/../frontend"
   echo "[deploy] Using VITE_SERVER_URL=${VITE_SERVER_URL}"
-  VITE_SERVER_URL="${VITE_SERVER_URL}" run npm run build
+  VITE_SERVER_URL="${VITE_SERVER_URL}" run pnpm --filter frontend build
 )
 
 # 3) Deploy Pages
