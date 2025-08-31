@@ -10,6 +10,8 @@ set -euo pipefail
 
 CF_ENV="${CF_ENV:-production}"
 PAGES_PROJECT="${PAGES_PROJECT:-ai-realtime-translator}"
+# Default frontend API endpoint if not specified
+VITE_SERVER_URL="${VITE_SERVER_URL:-https://ai-realtime-translator.fukata.dev}"
 
 echo "[deploy] CF_ENV=${CF_ENV} PAGES_PROJECT=${PAGES_PROJECT}"
 
@@ -26,12 +28,8 @@ echo "[deploy] Deploying Worker..."
 echo "[deploy] Building Frontend..."
 (
   cd "$(dirname "$0")/../frontend"
-  if [[ -n "${VITE_SERVER_URL:-}" ]]; then
-    echo "[deploy] Using VITE_SERVER_URL=${VITE_SERVER_URL}"
-    VITE_SERVER_URL="${VITE_SERVER_URL}" run npm run build
-  else
-    run npm run build
-  fi
+  echo "[deploy] Using VITE_SERVER_URL=${VITE_SERVER_URL}"
+  VITE_SERVER_URL="${VITE_SERVER_URL}" run npm run build
 )
 
 # 3) Deploy Pages
@@ -42,4 +40,3 @@ echo "[deploy] Deploying Pages..."
 )
 
 echo "[deploy] Done."
-

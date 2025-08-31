@@ -101,7 +101,9 @@
 
 - 前提: `wrangler` にログイン済み、Pages プロジェクト作成済み。
 - 実行例:
-  - `PAGES_PROJECT=ai-realtime-translator CF_ENV=production VITE_SERVER_URL="https://<your-worker>.workers.dev" npm run deploy`
+  - `PAGES_PROJECT=ai-realtime-translator CF_ENV=production npm run deploy`
+  - `VITE_SERVER_URL` を未指定の場合は `https://ai-realtime-translator.fukata.dev` を使用します。
+  - 別の Worker URL を使う場合は `VITE_SERVER_URL="https://<your-worker>.workers.dev" npm run deploy` を指定してください。
 - 挙動:
   - `worker/` を `wrangler deploy --env $CF_ENV` でデプロイ
   - `frontend/` をローカルビルド（`VITE_SERVER_URL` が設定されている場合は埋め込み）
