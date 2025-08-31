@@ -14,7 +14,7 @@ const MODEL_OPTIONS = [
   'gpt-4o-realtime-preview-2024-12-17',
 ];
 const LANGUAGE_OPTIONS: { code: string; label: string }[] = [
-  { code: 'ja', label: 'Japanese (ja)' },
+  { code: 'ja', label: '日本語 (ja)' },
   { code: 'en', label: 'English (en)' },
   { code: 'zh', label: 'Chinese (zh)' },
   { code: 'ko', label: 'Korean (ko)' },
