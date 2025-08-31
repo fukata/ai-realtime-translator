@@ -1,11 +1,10 @@
 # AI Realtime Translator (WIP)
 
-リアルタイム翻訳アプリの最小モノレポ。フロントは Vite + React、API は Cloudflare Workers（本番）/ Express（開発任意）。
+リアルタイム翻訳アプリの最小モノレポ。フロントは Vite + React、API は Cloudflare Workers（本番）。
 
 ## 構成
 
 - `frontend/`: Vite + React TypeScript クライアント
-- `server/`: Express ベースのトークン発行（ローカル開発用・任意）
 - `worker/`: Cloudflare Workers（本番でのトークン発行）
 - `tests/`: 統合テスト用のプレースホルダー
 - `scripts/`: ローカルツール類
@@ -19,7 +18,6 @@
 3. 開発サーバー:
    - Workers（API）: `pnpm --filter worker dev` → `http://localhost:8787`
    - Frontend: `pnpm --filter frontend dev` → `http://localhost:5173`
-   - （任意）Express: `pnpm --filter server dev`
 4. フロント画面で「Request Token」を押すと `/api/token` を呼び出します。
    - `VITE_SERVER_URL` が設定されていればその値（例: `http://localhost:8787` や本番の Workers URL）に対してリクエストします。
 
@@ -100,5 +98,5 @@
 
 ## 補足
 
-- `server/` はローカル開発での補助用です。将来的に本番は `worker/` のみで運用します。
+- サーバー（Express）は廃止し、本番/開発ともに `worker/` を前提とします。
 - このリポジトリのやり取りは日本語で統一します（詳細は `AGENTS.md` を参照）。

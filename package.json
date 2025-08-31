@@ -7,14 +7,14 @@
   },
   "scripts": {
     "build": "pnpm -r build",
-    "dev": "echo 'Use package-level dev scripts: server/frontend'",
+    "dev": "echo 'Use package-level dev scripts: frontend/worker'",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },
   "workspaces": [
     "frontend",
-    "server"
+    "worker"
   ],
   "devDependencies": {
     "wrangler": "^4.33.1"
