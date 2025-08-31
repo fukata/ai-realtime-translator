@@ -218,11 +218,16 @@ export function App() {
         if (e.channel?.label === 'oai-events') bindChannel(e.channel);
       };
 
-      // Capture microphone
-      const constraints: MediaStreamConstraints = micId
-        ? { audio: { deviceId: { exact: micId } } as any }
-        : { audio: true };
-      const local = await navigator.mediaDevices.getUserMedia(constraints);
+      // Capture microphone with built-in noise processing
+      const audioConstraints: MediaTrackConstraints = {
+        noiseSuppression: true,
+        echoCancellation: true,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 48000,
+      } as any;
+      if (micId) (audioConstraints as any).deviceId = { exact: micId };
+      const local = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
       localStreamRef.current = local;
       local.getTracks().forEach((t) => pc.addTrack(t, local));
 
