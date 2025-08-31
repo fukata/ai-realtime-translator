@@ -97,12 +97,23 @@ export function App() {
             if (typeof ev.data !== 'string') return; // ignore binary for now
             const msg = JSON.parse(ev.data);
             if (msg?.type) setLogs((ls) => [...ls, String(msg.type)]);
+
+            // Primary: transcript from audio
+            if (msg?.type === 'response.audio_transcript.delta' && typeof msg.delta === 'string') {
+              setTranscript((t) => t + msg.delta);
+            }
+            if (msg?.type === 'response.audio_transcript.done') {
+              setLogs((ls) => [...ls, 'audio_transcript_done']);
+            }
+
+            // Fallback: legacy text delta
             if (msg?.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
               setTranscript((t) => t + msg.delta);
             }
             if (msg?.type === 'response.output_text.done') {
               setLogs((ls) => [...ls, 'text_done']);
             }
+
             if (msg?.type === 'response.created') {
               setTranscript('');
             }
