@@ -6,27 +6,9 @@ compatibility_date = "2024-08-21"
 port = 8787
 
 [vars]
-# 開発時は Vite の http://localhost:5173 などをカンマ区切りで
-ALLOWED_ORIGINS = "http://localhost:5173"
-# 許可メール（Cloudflare Access が付与するヘッダと照合）。カンマ区切り
-ALLOWED_EMAILS = ""
-# 開発時に Access をバイパスするフラグ（true/false）
-DEV_BYPASS_ACCESS = "true"
-
-# 本番用のシークレットは wrangler secret で設定してください:
-#   wrangler secret put OPENAI_API_KEY
-
-# =============================
-# Production environment
-# =============================
-[env.production]
-# name を上書きしない場合、production は既定の名前でデプロイされます
-# name = "ai-realtime-translator-worker"
-
-[env.production.vars]
 # 本番のフロントドメイン（Pages など）を設定してください（カンマ区切り可）
-ALLOWED_ORIGINS = ""
+ALLOWED_ORIGINS = "https://ai-realtime-translator.fukata.dev"
 # 許可メール（Access と二重で制限する場合に設定。カンマ区切り）
-ALLOWED_EMAILS = ""
+ALLOWED_EMAILS = "tatsuya.fukata@gmail.com"
 # 本番では必ず Access バイパスを無効化
 DEV_BYPASS_ACCESS = "false"

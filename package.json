@@ -15,5 +15,8 @@
   "workspaces": [
     "frontend",
     "server"
-  ]
+  ],
+  "devDependencies": {
+    "wrangler": "^4.33.1"
+  }
 }
