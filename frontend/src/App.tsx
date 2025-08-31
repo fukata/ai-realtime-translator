@@ -101,6 +101,13 @@ export function App() {
           if (msg?.type === 'response.output_text.done') {
             setLogs((ls) => [...ls, 'text_done']);
           }
+          if (msg?.type === 'response.created') {
+            setTranscript('');
+            setLogs((ls) => [...ls, 'response_created']);
+          }
+          if (msg?.type === 'response.completed') {
+            setLogs((ls) => [...ls, 'response_completed']);
+          }
           if (msg?.type === 'response.error') {
             setLogs((ls) => [...ls, `error: ${msg.error?.message || ''}`]);
           }
@@ -150,7 +157,7 @@ export function App() {
           response: {
             instructions:
               `You are a real-time speech translator. Listen to the user's speech in ${sourceLang} and translate into ${targetLang}. Respond concisely in ${targetLang}.`,
-            modalities: ['audio'],
+            modalities: ['audio', 'text'],
             audio: { voice },
           },
         };
