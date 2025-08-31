@@ -39,6 +39,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [inputTranscript, setInputTranscript] = useState('');
   const [outputTranscript, setOutputTranscript] = useState('');
+  const inputBufferRef = useRef('');
+  const outputBufferRef = useRef('');
   type ChatItem = { id: string; role: 'input' | 'output'; text: string; at: number };
   const [chat, setChat] = useState<ChatItem[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
@@ -99,7 +101,6 @@ export function App() {
     setInputTranscript('');
     setOutputTranscript('');
     setLogs([]);
-    setChat([]);
     try {
       const token = await requestToken();
 
@@ -145,33 +146,41 @@ export function App() {
 
             // Primary: transcript from audio
             if (msg?.type === 'response.audio_transcript.delta' && typeof msg.delta === 'string') {
+              outputBufferRef.current += msg.delta;
               setOutputTranscript((t) => t + msg.delta);
             }
             if (msg?.type === 'response.audio_transcript.done') {
               setLogs((ls) => [...ls, 'audio_transcript_done']);
-              const text = (outputTranscript || '').trim();
+              const text = (outputBufferRef.current || '').trim();
               if (text) setChat((c) => [...c, { id: `${Date.now()}-out`, role: 'output', text, at: Date.now() }]);
               setOutputTranscript('');
+              outputBufferRef.current = '';
             }
 
             // Fallback: legacy text delta
             if (msg?.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
+              outputBufferRef.current += msg.delta;
               setOutputTranscript((t) => t + msg.delta);
             }
             if (msg?.type === 'response.output_text.done') {
               setLogs((ls) => [...ls, 'text_done']);
-              const text = (outputTranscript || '').trim();
+              const text = (outputBufferRef.current || '').trim();
               if (text) setChat((c) => [...c, { id: `${Date.now()}-out`, role: 'output', text, at: Date.now() }]);
               setOutputTranscript('');
+              outputBufferRef.current = '';
             }
 
             // Input side transcription (best effort)
             if (msg?.type === 'input_audio_buffer.speech_started') {
               setInputTranscript('');
+              inputBufferRef.current = '';
             }
             if (msg?.type === 'input_audio_transcription.delta' || msg?.type === 'input_audio_transcript.delta') {
               const seg = (msg.delta ?? msg.text ?? msg.transcript) as string | undefined;
-              if (typeof seg === 'string') setInputTranscript((t) => t + seg);
+              if (typeof seg === 'string') {
+                inputBufferRef.current += seg;
+                setInputTranscript((t) => t + seg);
+              }
             }
             if (
               msg?.type === 'input_audio_transcription.done' ||
@@ -179,9 +188,10 @@ export function App() {
               msg?.type === 'input_audio_transcript.done'
             ) {
               setLogs((ls) => [...ls, 'input_transcript_done']);
-              const text = (inputTranscript || '').trim();
+              const text = (inputBufferRef.current || '').trim();
               if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
               setInputTranscript('');
+              inputBufferRef.current = '';
             }
             // Realtime sometimes emits conversation-scoped input transcription events
             if (
@@ -196,19 +206,22 @@ export function App() {
               msg?.type === 'conversation.item.input_audio_transcript.completed'
             ) {
               setLogs((ls) => [...ls, 'conv_input_transcript_done']);
-              const text = (inputTranscript || '').trim();
+              const text = (inputBufferRef.current || '').trim();
               if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
               setInputTranscript('');
+              inputBufferRef.current = '';
             }
             // Some builds emit input as response.input_text.*
             if (msg?.type === 'response.input_text.delta' && typeof msg.delta === 'string') {
+              inputBufferRef.current += msg.delta;
               setInputTranscript((t) => t + msg.delta);
             }
             if (msg?.type === 'response.input_text.done') {
               setLogs((ls) => [...ls, 'input_text_done']);
-              const text = (inputTranscript || '').trim();
+              const text = (inputBufferRef.current || '').trim();
               if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
               setInputTranscript('');
+              inputBufferRef.current = '';
             }
 
             if (msg?.type === 'response.created') {
