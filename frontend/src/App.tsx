@@ -330,7 +330,7 @@ export function App() {
     <div className="mx-auto max-w-5xl p-3 font-sans">
       <h1 className="text-2xl font-semibold">AI Realtime Translator</h1>
 
-      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-slate-700">Model</span>
           <select
@@ -387,6 +387,18 @@ export function App() {
             ))}
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-slate-700">ノイズ処理</span>
+          <select
+            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
+            value={noiseProfile}
+            onChange={(e) => setNoiseProfile(e.target.value as NoiseProfile)}
+            title="getUserMedia constraints: noiseSuppression / echoCancellation / autoGainControl"
+          >
+            <option value="default">noiseSuppression, echoCancellation, autoGainControl</option>
+            <option value="off">noiseSuppression=false, echoCancellation=false, autoGainControl=false</option>
+          </select>
+        </label>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -403,18 +415,6 @@ export function App() {
                 {d.label || d.deviceId}
               </option>
             ))}
-          </select>
-        </label>
-        <label className="text-sm flex items-center gap-2">
-          <span className="text-slate-700">ノイズ処理:</span>
-          <select
-            className="rounded border-slate-300 focus:border-indigo-500 focus:ring-indigo-500"
-            value={noiseProfile}
-            onChange={(e) => setNoiseProfile(e.target.value as NoiseProfile)}
-            title="getUserMedia constraints: noiseSuppression / echoCancellation / autoGainControl"
-          >
-            <option value="default">noiseSuppression, echoCancellation, autoGainControl</option>
-            <option value="off">noiseSuppression=false, echoCancellation=false, autoGainControl=false</option>
           </select>
         </label>
         <button
