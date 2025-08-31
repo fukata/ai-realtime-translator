@@ -117,6 +117,9 @@ export function App() {
             }
 
             // Input side transcription (best effort)
+            if (msg?.type === 'input_audio_buffer.speech_started') {
+              setInputTranscript('');
+            }
             if (msg?.type === 'input_audio_transcription.delta') {
               const seg = (msg.delta ?? msg.text ?? msg.transcript) as string | undefined;
               if (typeof seg === 'string') setInputTranscript((t) => t + seg);
@@ -149,7 +152,10 @@ export function App() {
               session: {
                 turn_detection: { type: 'server_vad' },
                 // Ask server to provide input audio transcription
-                input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
+                input_audio_transcription: { model: 'gpt-4o-mini-transcribe', language: sourceLang },
+                // Enforce translation behavior at session (system) level for consistency
+                instructions:
+                  `You are a real-time speech translator. Translate any spoken input into ${targetLang}. Always respond ONLY in ${targetLang} with concise, natural phrasing. Do not include the source text or any explanations.`,
               },
             }),
           );
@@ -157,8 +163,6 @@ export function App() {
           const msg = {
             type: 'response.create',
             response: {
-              instructions:
-                `You are a real-time speech translator. Listen to the user's speech in ${sourceLang} and translate into ${targetLang}. Respond concisely in ${targetLang}.`,
               modalities: ['audio', 'text'],
               audio: { voice },
             },
