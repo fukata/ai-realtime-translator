@@ -43,7 +43,7 @@ export function App() {
   const [copied, setCopied] = useState(false);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [micId, setMicId] = useState<string>('');
-  type NoiseProfile = 'default' | 'off';
+  type NoiseProfile = 'default' | 'off' | 'rnnoise';
   const [noiseProfile, setNoiseProfile] = useState<NoiseProfile>('default');
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -222,18 +222,46 @@ export function App() {
       };
 
       // Capture microphone with configurable noise processing
-      const useProcessing = noiseProfile === 'default';
+      const enableBrowserDsp = noiseProfile === 'default';
       const audioConstraints: MediaTrackConstraints = {
-        noiseSuppression: useProcessing,
-        echoCancellation: useProcessing,
-        autoGainControl: useProcessing,
+        noiseSuppression: enableBrowserDsp,
+        echoCancellation: enableBrowserDsp,
+        autoGainControl: enableBrowserDsp,
         channelCount: 1,
         sampleRate: 48000,
       } as any;
       if (micId) (audioConstraints as any).deviceId = { exact: micId };
       const local = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
       localStreamRef.current = local;
-      local.getTracks().forEach((t) => pc.addTrack(t, local));
+
+      // If RNNoise wasm is selected, route through an AudioWorklet
+      if (noiseProfile === 'rnnoise') {
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 48000 });
+          const workletUrl = new URL('./worklets/rnnoise-processor.ts', import.meta.url);
+          await audioContext.audioWorklet.addModule(workletUrl);
+
+          const src = audioContext.createMediaStreamSource(local);
+          const denoiseNode = new (window as any).AudioWorkletNode(audioContext, 'rnnoise-processor');
+          const dst = audioContext.createMediaStreamDestination();
+          src.connect(denoiseNode as any);
+          (denoiseNode as any).connect(dst);
+
+          // Add processed track to PC
+          dst.stream.getTracks().forEach((t) => pc.addTrack(t, dst.stream));
+
+          // Keep references for cleanup
+          (window as any).__rnnoise_audio_context = audioContext;
+          (window as any).__rnnoise_nodes = { src, denoiseNode, dst };
+        } catch (e) {
+          // Fallback to direct tracks on failure
+          local.getTracks().forEach((t) => pc.addTrack(t, local));
+          setLogs((ls) => [...ls, `rnnoise_worklet_failed: ${String((e as any)?.message || e)}`]);
+        }
+      } else {
+        // direct: add original track(s)
+        local.getTracks().forEach((t) => pc.addTrack(t, local));
+      }
 
       const offer = await pc.createOffer({ offerToReceiveAudio: true });
       await pc.setLocalDescription(offer);
@@ -280,6 +308,12 @@ export function App() {
         } catch {}
       });
       pcRef.current?.close();
+    } catch {}
+    try {
+      const ac: AudioContext | undefined = (window as any).__rnnoise_audio_context;
+      if (ac) await ac.close();
+      (window as any).__rnnoise_audio_context = undefined;
+      (window as any).__rnnoise_nodes = undefined;
     } catch {}
     try {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -412,6 +446,7 @@ export function App() {
           >
             <option value="default">noiseSuppression, echoCancellation, autoGainControl</option>
             <option value="off">noiseSuppression=false, echoCancellation=false, autoGainControl=false</option>
+            <option value="rnnoise">RNNoise (WASM, 48kHz/mono)</option>
           </select>
         </label>
       </div>
