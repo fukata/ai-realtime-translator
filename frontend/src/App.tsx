@@ -774,7 +774,16 @@ export function App() {
         <div className="md:col-span-2">
           <div className="flex items-center justify-between my-2">
             <h3 className="m-0 font-medium">チャット（時系列）</h3>
-            <div className="text-xs text-slate-600">{new Date().toLocaleTimeString()}</div>
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-slate-600">{new Date().toLocaleTimeString()}</div>
+              <button
+                className="text-xs px-2 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => { setChat([]); setInputTranscript(''); setOutputTranscript(''); }}
+                title="チャットの履歴をクリアします"
+              >
+                クリア
+              </button>
+            </div>
           </div>
           <div className="bg-white border border-slate-200 rounded p-3 max-h-80 overflow-auto space-y-2">
             {chat.length === 0 && (
