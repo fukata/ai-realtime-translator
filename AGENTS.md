@@ -1,5 +1,9 @@
 # Repository Guidelines
 
+## コミュニケーション方針（日本語）
+- このリポジトリにおける全てのやり取り（Issue、Pull Request、コミットメッセージ、コードコメント、ドキュメント、レビュー、ディスカッション）は日本語で行います。
+- 例外が必要な場合は理由を明記し、最小限に留めてください。
+
 ## Project Structure & Module Organization
 - `frontend/`: Web client (Vite/Next.js). `src/`, `public/`, `components/`, `lib/`.
 - `server/`: Token issuer and optional proxy for OpenAI Realtime. `src/index.ts`, `src/routes/token.ts`.
