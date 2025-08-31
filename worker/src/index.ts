@@ -67,7 +67,7 @@ const handleToken: Handler = async (req, env) => {
     return textJson({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
   }
 
-  const DEFAULT_MODEL = 'gpt-4o-realtime-preview-2024-12-17';
+  const DEFAULT_MODEL = 'gpt-realtime';
   let body: any = {};
   try {
     if (req.headers.get('content-type')?.includes('application/json')) {

@@ -6,7 +6,7 @@ type ClientToken = {
   client_secret: { value: string; expires_at: number };
 };
 
-const DEFAULT_MODEL = 'gpt-4o-realtime-preview-2024-12-17';
+const DEFAULT_MODEL = 'gpt-realtime';
 const DEFAULT_VOICE = 'verse';
 const VOICE_OPTIONS = ['verse', 'alloy', 'aria', 'breeze'];
 const MODEL_OPTIONS = [
