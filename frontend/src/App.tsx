@@ -129,15 +129,23 @@ export function App() {
             if (msg?.type === 'input_audio_buffer.speech_started') {
               setInputTranscript('');
             }
-            if (msg?.type === 'input_audio_transcription.delta') {
+            if (msg?.type === 'input_audio_transcription.delta' || msg?.type === 'input_audio_transcript.delta') {
               const seg = (msg.delta ?? msg.text ?? msg.transcript) as string | undefined;
               if (typeof seg === 'string') setInputTranscript((t) => t + seg);
             }
             if (
               msg?.type === 'input_audio_transcription.done' ||
-              msg?.type === 'input_audio_transcription.completed'
+              msg?.type === 'input_audio_transcription.completed' ||
+              msg?.type === 'input_audio_transcript.done'
             ) {
               setLogs((ls) => [...ls, 'input_transcript_done']);
+            }
+            // Some builds emit input as response.input_text.*
+            if (msg?.type === 'response.input_text.delta' && typeof msg.delta === 'string') {
+              setInputTranscript((t) => t + msg.delta);
+            }
+            if (msg?.type === 'response.input_text.done') {
+              setLogs((ls) => [...ls, 'input_text_done']);
             }
 
             if (msg?.type === 'response.created') {
@@ -157,7 +165,7 @@ export function App() {
                       instructions:
                         `Translate the user's speech from ${sourceLang} to ${targetLang}. Always answer only in ${targetLang}.`,
                       modalities: ['audio', 'text'],
-                      audio: { voice },
+                      voice: voice,
                     },
                   }),
                 );
@@ -178,7 +186,7 @@ export function App() {
               session: {
                 turn_detection: { type: 'server_vad' },
                 // Ask server to provide input audio transcription
-                input_audio_transcription: { model: 'whisper-1', language: sourceLang },
+                input_audio_transcription: { model: 'gpt-4o-mini-transcribe', language: sourceLang },
                 // Enforce translation behavior at session (system) level for consistency
                 instructions:
                   `You are a real-time speech translator. Translate any spoken input into ${targetLang}. Always respond ONLY in ${targetLang} with concise, natural phrasing. Do not include the source text or any explanations.`,
