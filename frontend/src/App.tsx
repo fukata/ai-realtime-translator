@@ -39,6 +39,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [inputTranscript, setInputTranscript] = useState('');
   const [outputTranscript, setOutputTranscript] = useState('');
+  type ChatItem = { id: string; role: 'input' | 'output'; text: string; at: number };
+  const [chat, setChat] = useState<ChatItem[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
@@ -97,6 +99,7 @@ export function App() {
     setInputTranscript('');
     setOutputTranscript('');
     setLogs([]);
+    setChat([]);
     try {
       const token = await requestToken();
 
@@ -146,6 +149,9 @@ export function App() {
             }
             if (msg?.type === 'response.audio_transcript.done') {
               setLogs((ls) => [...ls, 'audio_transcript_done']);
+              const text = (outputTranscript || '').trim();
+              if (text) setChat((c) => [...c, { id: `${Date.now()}-out`, role: 'output', text, at: Date.now() }]);
+              setOutputTranscript('');
             }
 
             // Fallback: legacy text delta
@@ -154,6 +160,9 @@ export function App() {
             }
             if (msg?.type === 'response.output_text.done') {
               setLogs((ls) => [...ls, 'text_done']);
+              const text = (outputTranscript || '').trim();
+              if (text) setChat((c) => [...c, { id: `${Date.now()}-out`, role: 'output', text, at: Date.now() }]);
+              setOutputTranscript('');
             }
 
             // Input side transcription (best effort)
@@ -170,6 +179,9 @@ export function App() {
               msg?.type === 'input_audio_transcript.done'
             ) {
               setLogs((ls) => [...ls, 'input_transcript_done']);
+              const text = (inputTranscript || '').trim();
+              if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
+              setInputTranscript('');
             }
             // Realtime sometimes emits conversation-scoped input transcription events
             if (
@@ -184,6 +196,9 @@ export function App() {
               msg?.type === 'conversation.item.input_audio_transcript.completed'
             ) {
               setLogs((ls) => [...ls, 'conv_input_transcript_done']);
+              const text = (inputTranscript || '').trim();
+              if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
+              setInputTranscript('');
             }
             // Some builds emit input as response.input_text.*
             if (msg?.type === 'response.input_text.delta' && typeof msg.delta === 'string') {
@@ -191,6 +206,9 @@ export function App() {
             }
             if (msg?.type === 'response.input_text.done') {
               setLogs((ls) => [...ls, 'input_text_done']);
+              const text = (inputTranscript || '').trim();
+              if (text) setChat((c) => [...c, { id: `${Date.now()}-in`, role: 'input', text, at: Date.now() }]);
+              setInputTranscript('');
             }
 
             if (msg?.type === 'response.created') {
@@ -753,16 +771,32 @@ export function App() {
             </div>
           </>
         )}
-        <div>
-          <h3 className="my-2 font-medium">Input Transcript ({sourceLang})</h3>
-          <div className="whitespace-pre-wrap bg-slate-100 rounded p-3 min-h-20">
-            {inputTranscript || '—'}
+        <div className="md:col-span-2">
+          <div className="flex items-center justify-between my-2">
+            <h3 className="m-0 font-medium">チャット（時系列）</h3>
+            <div className="text-xs text-slate-600">{new Date().toLocaleTimeString()}</div>
           </div>
-        </div>
-        <div>
-          <h3 className="my-2 font-medium">Output Transcript ({targetLang})</h3>
-          <div className="whitespace-pre-wrap bg-slate-100 rounded p-3 min-h-20">
-            {outputTranscript || '—'}
+          <div className="bg-white border border-slate-200 rounded p-3 max-h-80 overflow-auto space-y-2">
+            {chat.length === 0 && (
+              <div className="text-slate-500 text-sm">まだメッセージはありません</div>
+            )}
+            {chat.map((m) => (
+              <div key={m.id} className={m.role === 'input' ? 'flex' : 'flex justify-end'}>
+                <div className={(m.role === 'input' ? 'bg-slate-100 text-slate-800' : 'bg-indigo-600 text-white') + ' rounded px-3 py-2 max-w-[80%] whitespace-pre-wrap'}>
+                  <div className="text-[10px] opacity-70 mb-1">
+                    {m.role === 'input' ? `入力 (${sourceLang})` : `出力 (${targetLang})`}・{new Date(m.at).toLocaleTimeString()}
+                  </div>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {(inputTranscript || outputTranscript) && (
+              <div className="flex">
+                <div className={'bg-slate-50 text-slate-700 rounded px-3 py-2 max-w-[80%] whitespace-pre-wrap italic'}>
+                  {(inputTranscript || outputTranscript) + ' …'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {showWaveform && (
