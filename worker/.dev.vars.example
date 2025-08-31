@@ -1,0 +1,9 @@
+# Local-only variables for `wrangler dev` (do not commit real secrets)
+
+# Required: your OpenAI API key for local testing
+OPENAI_API_KEY=
+
+# Optional overrides (these also exist in wrangler.toml vars)
+# ALLOWED_ORIGINS=http://localhost:5173
+# ALLOWED_EMAILS=
+# DEV_BYPASS_ACCESS=true

@@ -41,7 +41,8 @@
   - `ALLOWED_ORIGINS`: 許可するオリジン（カンマ区切り）
   - `ALLOWED_EMAILS`: 許可メール（Access のヘッダと照合）
   - `DEV_BYPASS_ACCESS`: 開発時に Access 検証をバイパス（本番では無効）
-- Secrets: `wrangler secret put OPENAI_API_KEY`（必須）
+- Secrets（本番）: `wrangler secret put OPENAI_API_KEY`（必須）
+- Secrets（ローカル）: `worker/.dev.vars.example` を `worker/.dev.vars` にコピーし、`OPENAI_API_KEY` を設定（`.dev.vars` は Git 無視）
 - Cloudflare Access: Pages/Workers の保護を有効にし、許可メールを限定してください。
 
 ### API: POST /api/token
