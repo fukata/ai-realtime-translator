@@ -819,6 +819,13 @@ export function App() {
         <div className="flex items-center gap-3 my-2">
           <h3 className="m-0 font-medium">Logs</h3>
           <button
+            className="px-3 py-1.5 rounded bg-slate-200 hover:bg-slate-300"
+            onClick={() => setLogs([])}
+            title="ログをクリアします"
+          >
+            クリア
+          </button>
+          <button
             className="px-3 py-1.5 rounded bg-slate-200 hover:bg-slate-300 disabled:opacity-50"
             onClick={copyLogs}
             disabled={logs.length === 0}
