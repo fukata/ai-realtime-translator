@@ -21,3 +21,11 @@ coverage/
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Generated JS from TS in frontend
+frontend/src/App.js
+frontend/src/main.js
+frontend/vite.config.js
